@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Edit Chapter | ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav class="main-nav">
+
+            <a href="/" class="logo">
+                ReadyWriter
+            </a>
+
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/drafts">My Drafts</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+            </div>
+
+        </nav>
+    </header>
+
+    <main class="chapter-page">
+
+        <p class="back-to-books">
+            <a href="/books">← Back to Books</a>
+        </p>
+
+        <p class="back-to-home">
+            <a href="/">← Back to Home</a>
+        </p>
+
+        <p class="section-label">
+            EDIT YOUR WORK
+        </p>
+
+        <h1>Edit Chapter</h1>
+
+        <form action="/update" method="POST">
+
+            <input
+                type="hidden"
+                name="id"
+                value="{{.ID}}"
+            >
+
+            <label for="title">Chapter Title</label>
+
+            <input
+                type="text"
+                id="title"
+                name="title"
+                value="{{.Title}}"
+                required
+            >
+
+            <label for="content">Chapter</label>
+
+            <textarea
+                id="content"
+                name="content"
+                rows="15"
+                required
+            >{{.Content}}</textarea>
+
+            <div class="form-buttons">
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="draft"
+                >
+                    Save as Draft
+                </button>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="publish"
+                >
+                    Publish Chapter
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
+</body>
+
+</html>

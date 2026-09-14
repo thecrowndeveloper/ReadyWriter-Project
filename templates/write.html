@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Write | ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav class="main-nav">
+
+            <a href="/" class="logo">
+                ReadyWriter
+            </a>
+
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/drafts">My Drafts</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+            </div>
+
+        </nav>
+    </header>
+
+    <main class="chapter-page">
+
+        <p class="back-to-home">
+            <a href="/">← Back to Home</a>
+        </p>
+
+        <p class="section-label">
+            02 — THE WRITING STUDIO
+        </p>
+
+        <h1>
+            Write your
+            <span>next chapter.</span>
+        </h1>
+
+        <p class="write-intro">
+            Turn your ideas into something worth reading.
+            Choose a book, give your chapter a title,
+            and start writing.
+        </p>
+
+        <!-- CREATE BOOK -->
+
+        <div class="new-book">
+
+            <p class="new-book-label">
+                Want to start a new book?
+            </p>
+
+            <form action="/create-book" method="POST">
+
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="Enter your new book title"
+                    required
+                >
+
+                <button type="submit">
+                    + Create Book
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <!-- WRITE CHAPTER -->
+
+        <form action="/publish" method="POST">
+
+            <label for="book">
+                Choose a Book
+            </label>
+
+            <select
+                id="book"
+                name="book_id"
+                required
+            >
+                {{range .}}
+                    <option value="{{.ID}}">
+                        {{.Title}}
+                    </option>
+                {{end}}
+            </select>
+
+
+            <label for="title">
+                Chapter Title
+            </label>
+
+            <input
+                type="text"
+                id="title"
+                name="title"
+                placeholder="Enter chapter title"
+                required
+            >
+
+
+            <label for="content">
+                Chapter
+            </label>
+
+            <textarea
+                id="content"
+                name="content"
+                rows="15"
+                placeholder="Start writing your chapter..."
+                required
+            ></textarea>
+
+
+            <div class="form-buttons">
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="draft"
+                >
+                    Save as Draft
+                </button>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="publish"
+                >
+                    Publish Chapter
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
+</body>
+
+</html>

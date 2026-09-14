@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{.Chapter.Title}} | ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav class="main-nav">
+
+            <a href="/" class="logo">
+                ReadyWriter
+            </a>
+
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+            </div>
+
+        </nav>
+    </header>
+
+    <main class="chapter-page">
+
+        <p class="back-to-books">
+            <a href="/books">← Back to Books</a>
+        </p>
+
+        <h1>{{.Chapter.Title}}</h1>
+
+        <p class="chapter-meta">
+    READYWRITER — CHAPTER {{.Chapter.ID}}
+</p>
+
+   <div class="chapter-actions">
+
+    <p class="chapter-actions-label">
+        Writer Controls
+    </p>
+
+    <div class="chapter-action-links">
+
+        <a
+            href="/edit?id={{.Chapter.ID}}"
+            onclick="return confirm('Are you sure you want to edit this chapter?');"
+        >
+            Edit Chapter
+        </a>
+
+        <a
+            href="/delete?id={{.Chapter.ID}}"
+            onclick="return confirm('Are you sure you want to delete this chapter?');"
+        >
+            Delete Chapter
+        </a>
+
+    </div>
+
+</div>     
+
+        <div class="chapter-content">
+            <p>{{.Chapter.Content}}</p>
+        </div>
+
+        <div class="chapter-navigation">
+
+            {{if .HasPrevious}}
+                <a href="/chapter?id={{.PreviousID}}">
+                    ← Previous Chapter
+                </a>
+            {{end}}
+
+            {{if .HasNext}}
+                <a href="/chapter?id={{.NextID}}">
+                    Next Chapter →
+                </a>
+            {{end}}
+
+        </div>
+
+    </main>
+
+</body>
+
+</html>

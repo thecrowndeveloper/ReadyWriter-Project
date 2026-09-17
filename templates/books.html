@@ -52,15 +52,22 @@
         <article class="chapter-card">
 
             <div>
-                <p>CHAPTER {{.ID}}</p>
+   <p>BOOK</p>
+    <h2>{{.Title}}</h2>
 
-                <h2>{{.Title}}</h2>
-            </div>
+    <p class="book-chapter-count">
+    {{.ChapterCount}}
+    {{if eq .ChapterCount 1}}
+        published chapter
+    {{else}}
+        published chapters
+    {{end}}
+</p>
+</div>
 
-            <a href="/chapter?id={{.ID}}">
-                Read Chapter →
-            </a>
-
+            <a href="/book?id={{.ID}}">
+    Open Book →
+</a>
         </article>
 
         {{else}}

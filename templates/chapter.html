@@ -41,31 +41,23 @@
     READYWRITER — CHAPTER {{.Chapter.ID}}
 </p>
 
-   <div class="chapter-actions">
+   {{if .IsOwner}}
 
-    <p class="chapter-actions-label">
-        Writer Controls
-    </p>
+<div class="chapter-actions">
+    <p class="chapter-actions-label">Writer Controls</p>
 
     <div class="chapter-action-links">
-
-        <a
-            href="/edit?id={{.Chapter.ID}}"
-            onclick="return confirm('Are you sure you want to edit this chapter?');"
-        >
+        <a href="/edit?id={{.Chapter.ID}}" onclick="return confirm('Are you sure you want to edit this chapter?');">
             Edit Chapter
         </a>
 
-        <a
-            href="/delete?id={{.Chapter.ID}}"
-            onclick="return confirm('Are you sure you want to delete this chapter?');"
-        >
+        <a href="/delete?id={{.Chapter.ID}}" onclick="return confirm('Are you sure you want to delete this chapter?');">
             Delete Chapter
         </a>
-
     </div>
+</div>
 
-</div>     
+{{end}}
 
         <div class="chapter-content">
             <p>{{.Chapter.Content}}</p>

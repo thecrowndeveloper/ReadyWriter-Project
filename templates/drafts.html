@@ -2,17 +2,20 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>My Drafts | ReadyWriter</title>
 
     <link rel="stylesheet" href="/static/css/style.css">
+
 </head>
 
 <body>
 
     <header>
+
         <nav class="main-nav">
 
             <a href="/" class="logo">
@@ -20,58 +23,97 @@
             </a>
 
             <div class="nav-links">
+
                 <a href="/">Home</a>
                 <a href="/books">Books</a>
-                <a href="/drafts">My Drafts</a>
+                <a href="/write">Write</a>
                 <a href="/jobs">Jobs</a>
                 <a href="/community">Community</a>
+
             </div>
 
         </nav>
+
     </header>
 
-    <main class="books-page">
+
+    <main class="chapter-page">
 
         <p class="back-to-home">
-            <a href="/">← Back to Home</a>
-        </p>
-
-        <p class="back-to-books">
-            <a href="/books">← Back to Books</a>
+            <a href="/dashboard">← Back to Dashboard</a>
         </p>
 
         <p class="section-label">
-            02 — YOUR WORK
+            YOUR WRITING SPACE
         </p>
 
         <h1>
-            My
-            <span>Drafts.</span>
+            My <span>drafts.</span>
         </h1>
 
-        {{range .}}
-
-        <article class="chapter-card">
-
-            <div>
-                <p>DRAFT {{.ID}}</p>
-
-                <h2>{{.Title}}</h2>
-            </div>
-
-            <a href="/edit?id={{.ID}}">
-                Continue Writing →
-            </a>
-
-        </article>
-
-        {{else}}
-
-        <p class="empty-message">
-            You don't have any drafts yet.
+        <p class="write-intro">
+            Continue working on your unfinished chapters whenever you're ready.
         </p>
 
-        {{end}}
+
+        <section class="dashboard-section">
+
+            {{range .}}
+
+            <article class="chapter-card">
+
+                <div>
+
+                    <p>
+                        DRAFT
+                    </p>
+
+                    <h2>
+                        {{.Title}}
+                    </h2>
+
+                </div>
+
+
+                <div class="chapter-action-links">
+
+                    <a href="/edit?id={{.ID}}">
+                        Continue Editing →
+                    </a>
+
+                   <form action="/publish-draft" method="POST">
+
+                        <input
+                            type="hidden"
+                            name="id"
+                            value="{{.ID}}"
+                        >
+
+                        
+                        <button
+                            type="submit"
+                            name="action"
+                            value="publish"
+                        >
+                            Publish →
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </article>
+
+            {{else}}
+
+            <p class="empty-message">
+                You don't have any drafts yet.
+            </p>
+
+            {{end}}
+
+        </section>
+
 
     </main>
 

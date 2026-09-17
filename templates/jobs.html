@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Jobs — ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+
+   <nav class="main-nav">
+
+        <div class="logo">
+            ReadyWriter
+        </div>
+
+        <div class="nav-links">
+
+            <a href="/">Home</a>
+            <a href="/books">Books</a>
+            <a href="/jobs">Jobs</a>
+            <a href="/community">Community</a>
+
+            {{if .UserName}}
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Log Out</a>
+            {{else}}
+                <a href="/login">Log In</a>
+                <a href="/register">Join Us</a>
+            {{end}}
+
+        </div>
+
+    </nav>
+
+
+    <!-- JOBS PAGE -->
+
+    <main class="jobs-page">
+
+        <!-- HERO -->
+
+        <section class="jobs-hero">
+
+            <p class="section-label">
+                READYWRITER JOBS
+            </p>
+
+            <h1>
+                Find work.<br>
+                <span>Build stories.</span>
+            </h1>
+
+            <p class="write-intro">
+                Discover opportunities for writers, editors, ghostwriters,
+                beta readers and other creative professionals.
+            </p>
+
+        </section>
+
+
+        <!-- JOB LIST -->
+
+        <section class="jobs-section">
+
+            <div class="jobs-section-heading">
+
+                <p class="section-label">
+                    OPEN OPPORTUNITIES
+                </p>
+
+                <p class="jobs-count">
+                    03 LISTINGS
+                </p>
+
+            </div>
+
+
+            <div class="jobs-list">
+
+
+                <!-- JOB 01 -->
+
+                <article class="job-card">
+
+                    <div class="job-number">
+                        01
+                    </div>
+
+                    <div class="job-card-content">
+
+                        <p class="job-type">
+                            Ghostwriting
+                        </p>
+
+                        <h2>
+                            Romance Novel Ghostwriter
+                        </h2>
+
+                        <p>
+                            Looking for a creative writer to help develop
+                            and write a romance story from an existing concept.
+                        </p>
+
+                        <div class="job-meta">
+
+                            <span>
+                                Remote
+                            </span>
+
+                            <span>
+                                Paid
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <a href="#" class="message-button">
+                        View Job →
+                    </a>
+
+                </article>
+
+
+                <!-- JOB 02 -->
+
+                <article class="job-card">
+
+                    <div class="job-number">
+                        02
+                    </div>
+
+                    <div class="job-card-content">
+
+                        <p class="job-type">
+                            Editing
+                        </p>
+
+                        <h2>
+                            Fiction Editor
+                        </h2>
+
+                        <p>
+                            Seeking an editor to review a fiction manuscript,
+                            improve clarity and flow, and provide constructive
+                            feedback for the author.
+                        </p>
+
+                        <div class="job-meta">
+
+                            <span>
+                                Remote
+                            </span>
+
+                            <span>
+                                Paid
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <a href="#" class="message-button">
+                        View Job →
+                    </a>
+
+                </article>
+
+
+                <!-- JOB 03 -->
+
+                <article class="job-card">
+
+                    <div class="job-number">
+                        03
+                    </div>
+
+                    <div class="job-card-content">
+
+                        <p class="job-type">
+                            Beta Reading
+                        </p>
+
+                        <h2>
+                            Beta Reader Needed
+                        </h2>
+
+                        <p>
+                            Looking for an enthusiastic reader to review
+                            an upcoming novel and provide honest feedback
+                            before publication.
+                        </p>
+
+                        <div class="job-meta">
+
+                            <span>
+                                Remote
+                            </span>
+
+                            <span>
+                                Paid
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <a href="#" class="message-button">
+                        View Job →
+                    </a>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer class="site-footer">
+
+        <p>
+            © 2026 ReadyWriter
+        </p>
+
+        <p>
+            For writers, readers & creators.
+        </p>
+
+    </footer>
+
+
+    <script src="/static/js/main.js"></script>
+
+</body>
+</html>

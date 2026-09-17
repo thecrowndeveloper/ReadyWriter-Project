@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Earnings | ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="main-nav">
+
+            <a href="/" class="logo">
+                ReadyWriter
+            </a>
+
+            <div class="nav-links">
+
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/drafts">My Drafts</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/logout">Log Out</a>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <main class="chapter-page">
+
+        <p class="back-to-home">
+            <a href="/dashboard">← Back to Dashboard</a>
+        </p>
+
+        <p class="section-label">
+            YOUR EARNINGS
+        </p>
+
+        <h1>
+            Your <span>earnings.</span>
+        </h1>
+
+        <p class="write-intro">
+            Track what you have earned from your work on ReadyWriter.
+        </p>
+
+        
+<section class="dashboard-section">
+
+    <div class="earnings-summary">
+
+        <article class="earning-summary-card">
+
+            <p>Total Earned</p>
+
+            <h2>
+                ${{printf "%.2f" .TotalEarned}} USD
+            </h2>
+
+        </article>
+
+
+        <article class="earning-summary-card">
+
+            <p>Pending</p>
+
+            <h2>
+                ${{printf "%.2f" .Pending}} USD
+            </h2>
+
+        </article>
+
+
+        <article class="earning-summary-card">
+
+            <p>Paid</p>
+
+            <h2>
+                ${{printf "%.2f" .Paid}} USD
+            </h2>
+
+        </article>
+
+    </div>
+
+
+    <div class="earnings-list">
+
+        {{range .Earnings}}
+
+        <article class="chapter-card">
+
+            <div>
+
+                <p>
+                    {{.EarningType}}
+                </p>
+
+                <h2>
+                    ${{printf "%.2f" .Amount}} {{.Currency}}
+                </h2>
+
+                <p>
+                    Status: {{.Status}}
+                </p>
+
+            </div>
+
+        </article>
+
+        {{else}}
+
+        <p class="empty-message">
+            You haven't earned anything yet.
+        </p>
+
+        {{end}}
+
+    </div>
+
+</section>
+       
+
+    </main>
+
+</body>
+
+</html>

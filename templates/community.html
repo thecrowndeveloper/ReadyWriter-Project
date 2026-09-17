@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community — ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+
+    <header>
+
+        <nav class="main-nav">
+
+            <div class="logo">
+                ReadyWriter
+            </div>
+
+            <div class="nav-links">
+
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+
+                {{if .UserName}}
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/logout">Log Out</a>
+                {{else}}
+                    <a href="/login">Log In</a>
+                    <a href="/register">Join Us</a>
+                {{end}}
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <!-- COMMUNITY -->
+
+    <main class="community-page">
+
+        <section class="community-hero">
+
+            <p class="section-label">
+                READYWRITER COMMUNITY
+            </p>
+
+            <h1>
+                Stories start<br>
+                <span>with people.</span>
+            </h1>
+
+            <p class="community-intro">
+                Connect with writers and readers, share ideas,
+                discover conversations and be part of the story.
+            </p>
+
+        </section>
+
+
+        <!-- COMMUNITY ACTIONS -->
+
+        <section class="community-actions">
+
+            <div>
+
+                <p class="section-label">
+                    JOIN THE CONVERSATION
+                </p>
+
+                <h2>
+                    What are you<br>
+                    thinking about?
+                </h2>
+
+            </div>
+
+            <a href="#" class="message-button">
+                Create a Post →
+            </a>
+
+        </section>
+
+
+        <!-- DEMO POSTS -->
+
+        <section class="community-feed">
+
+            <div class="community-feed-heading">
+
+                <p class="section-label">
+                    RECENT CONVERSATIONS
+                </p>
+
+                <p class="community-count">
+                    03 POSTS
+                </p>
+
+            </div>
+
+
+            <article class="community-post">
+
+                <div class="post-number">
+                    01
+                </div>
+
+                <div class="post-content">
+
+                    <p class="post-category">
+                        WRITING
+                    </p>
+
+                    <h2>
+                        How do you stay consistent
+                        when writing a new story?
+                    </h2>
+
+                    <p>
+                        Share your writing routines, habits and
+                        anything that helps you keep going.
+                    </p>
+
+                    <div class="post-meta">
+
+                        <span>
+                            Demo Writer
+                        </span>
+
+                        <span>
+                            4 comments
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <a href="#" class="post-link">
+                    Read →
+                </a>
+
+            </article>
+
+
+            <article class="community-post">
+
+                <div class="post-number">
+                    02
+                </div>
+
+                <div class="post-content">
+
+                    <p class="post-category">
+                        READING
+                    </p>
+
+                    <h2>
+                        What makes you
+                        recommend a book?
+                    </h2>
+
+                    <p>
+                        Talk about the characters, stories and
+                        moments that make a book memorable.
+                    </p>
+
+                    <div class="post-meta">
+
+                        <span>
+                            Test Writer
+                        </span>
+
+                        <span>
+                            7 comments
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <a href="#" class="post-link">
+                    Read →
+                </a>
+
+            </article>
+
+
+            <article class="community-post">
+
+                <div class="post-number">
+                    03
+                </div>
+
+                <div class="post-content">
+
+                    <p class="post-category">
+                        COMMUNITY
+                    </p>
+
+                    <h2>
+                        Introduce yourself
+                        to ReadyWriter.
+                    </h2>
+
+                    <p>
+                        Tell the community what you write,
+                        what you read and what brought you here.
+                    </p>
+
+                    <div class="post-meta">
+
+                        <span>
+                            ReadyWriter
+                        </span>
+
+                        <span>
+                            12 comments
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <a href="#" class="post-link">
+                    Read →
+                </a>
+
+            </article>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer class="site-footer">
+
+        <p>
+            © 2026 ReadyWriter
+        </p>
+
+        <p>
+            For writers, readers & creators.
+        </p>
+
+    </footer>
+
+
+    <script src="/static/js/main.js"></script>
+
+</body>
+
+</html>

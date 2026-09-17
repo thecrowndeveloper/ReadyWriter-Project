@@ -17,14 +17,31 @@
     <a href="/" class="logo">
         ReadyWriter
     </a>
+<div class="nav-links">
 
-    <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/books">Books</a>
-        <a href="/jobs">Jobs</a>
-        <a href="/community">Community</a>
-    </div>
+    <a href="/">Home</a>
+    <a href="/books">Books</a>
+    <a href="/jobs">Jobs</a>
+    <a href="/community">Community</a>
 
+    {{if eq .UserRole "writer"}}
+    <a href="/write">Write</a>
+{{end}}
+
+    {{if .UserName}}
+
+        <a href="/dashboard">Dashboard</a>
+        <a href="/logout">Log Out</a>
+
+    {{else}}
+
+        <a href="/login">Log In</a>
+        <a href="/register">Join Us</a>
+
+    {{end}}
+
+</div>
+    
 </nav> 
     </header>
 

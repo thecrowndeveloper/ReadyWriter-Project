@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="main-nav">
+
+            <a href="/" class="logo">
+                ReadyWriter
+            </a>
+
+            <div class="nav-links">
+
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+
+                {{if eq .UserRole "writer"}}
+
+                    <a href="/write">Write</a>
+
+                {{end}}
+
+                <a href="/logout">
+                    Log Out
+                </a>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <main class="chapter-page">
+
+
+        {{if eq .UserRole "writer"}}
+
+        <p class="section-label">
+            YOUR READYWRITER SPACE
+        </p>
+
+        <h1>
+            Welcome, {{.UserName}}.
+        </h1>
+
+        <p class="write-intro">
+            Write your stories, discover new books and manage everything you do on ReadyWriter from one place.
+        </p>
+
+     <div class="dashboard-actions">
+
+    <a href="/write" class="message-button">
+        + Create New Book
+    </a>
+
+    <a href="/drafts" class="message-button">
+        My Drafts →
+    </a>
+
+</div>
+
+<div class="writing-activity-preview">
+
+    <p class="section-label">
+        YOUR WRITING ACTIVITY
+    </p>
+
+    <h2>
+        {{.ActiveDays}} active day
+        {{if ne .ActiveDays 1}}s{{end}}
+    </h2>
+
+    <p>
+        Keep writing consistently to build your activity record.
+    </p>
+
+</div>
+
+    
+<div class="earnings-preview">
+
+    <p class="section-label">
+        YOUR EARNINGS
+    </p>
+
+    <h2>
+        {{printf "$%.2f USD" .TotalEarned}}
+    </h2>
+
+    <a href="/earnings" class="message-button">
+    View Earnings →
+</a>
+</div>
+
+
+
+        <section class="dashboard-section">
+
+            <p class="section-label">
+                YOUR BOOKS
+            </p>
+
+            {{range .Books}}
+
+                <article class="chapter-card">
+
+                    <div>
+
+                        <p>
+                            BOOK
+                        </p>
+
+                        <h2>
+                            {{.Title}}
+                        </h2>
+
+                    </div>
+
+                    <a href="/book?id={{.ID}}">
+                        Open Book →
+                    </a>
+
+                </article>
+
+            {{else}}
+
+                <p class="empty-message">
+                    You haven't created a book yet.
+                </p>
+
+            {{end}}
+
+        </section>
+
+        {{else}}
+
+        <p class="section-label">
+            YOUR READING SPACE
+        </p>
+
+        <h1>
+            Welcome, {{.UserName}}.
+        </h1>
+
+        <p class="write-intro">
+            Discover stories, follow your favourite books and take part in the ReadyWriter community.
+        </p>
+
+        <div class="dashboard-actions">
+
+            <a href="/books" class="message-button">
+                Discover Books →
+            </a>
+
+            <a href="/community" class="message-button">
+                Visit Community →
+            </a>
+
+            <form action="/become-writer" method="POST">
+
+                <button type="submit" class="message-button">
+                    Become a Writer →
+                </button>
+
+            </form>
+
+        </div>
+
+        {{end}}
+
+
+        <section class="dashboard-section">
+
+            <p class="section-label">
+                RECENTLY READ
+            </p>
+
+            {{range .Readings}}
+
+                <article class="chapter-card">
+
+                    <div>
+
+                        <p>
+                            {{.BookTitle}}
+                        </p>
+
+                        <h2>
+                            {{.ChapterTitle}}
+                        </h2>
+
+                    </div>
+
+                    <a href="/chapter?id={{.ChapterID}}">
+                        Continue Reading →
+                    </a>
+
+                </article>
+
+            {{else}}
+
+                <p class="empty-message">
+                    You haven't read any chapters yet.
+                </p>
+
+            {{end}}
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <p class="section-label">
+                SAVED BOOKS
+            </p>
+
+            {{range .SavedBooks}}
+
+                <article class="chapter-card">
+
+                    <div>
+
+                        <p>
+                            SAVED BOOK
+                        </p>
+
+                        <h2>
+                            {{.BookTitle}}
+                        </h2>
+
+                    </div>
+
+                    <a href="/book?id={{.BookID}}">
+                        Open Book →
+                    </a>
+
+                </article>
+
+            {{else}}
+
+                <p class="empty-message">
+                    You haven't saved any books yet.
+                </p>
+
+            {{end}}
+
+        </section>
+
+
+    </main>
+
+</body>
+
+</html>

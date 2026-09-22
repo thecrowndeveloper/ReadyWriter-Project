@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Post — ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="main-nav">
+
+            <div class="logo">
+                ReadyWriter
+            </div>
+
+            <div class="nav-links">
+
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+
+                {{if .UserName}}
+
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/logout">Log Out</a>
+
+                {{else}}
+
+                    <a href="/login">Log In</a>
+                    <a href="/register">Join Us</a>
+
+                {{end}}
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <main class="create-post-page">
+
+        <section class="create-post-hero">
+
+            <p class="section-label">
+                COMMUNITY
+            </p>
+
+            <h1>
+                Start a<br>
+                <span>conversation.</span>
+            </h1>
+
+        </section>
+
+
+        <section class="create-post-form-section">
+
+            <form action="/create-post" method="POST">
+
+                <label for="content">
+                    What would you like to share?
+                </label>
+
+                <textarea
+                    id="content"
+                    name="content"
+                    rows="10"
+                    placeholder="Write something for the community..."
+                    required
+                ></textarea>
+
+
+                <div class="create-post-actions">
+
+                    <a href="/community" class="text-link">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="message-button">
+                        Publish Post →
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <footer class="site-footer">
+
+        <p>
+            © 2026 ReadyWriter
+        </p>
+
+        <p>
+            For writers, readers & creators.
+        </p>
+
+    </footer>
+
+
+    <script src="/static/js/main.js"></script>
+
+</body>
+
+</html>

@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -53,6 +54,21 @@ type ChapterPage struct {
 	HasPrevious bool
 	HasNext     bool
 	IsOwner     bool
+}
+
+type Post struct {
+	ID        int
+	Number    int
+	UserName  string
+	Content   string
+	CreatedAt string
+}
+
+type Comment struct {
+	ID        int
+	UserName  string
+	Content   string
+	CreatedAt string
 }
 
 var db *sql.DB
@@ -291,6 +307,7 @@ func community(w http.ResponseWriter, r *http.Request) {
 	var userName string
 
 	if userID != 0 {
+
 		err := db.QueryRow(
 			"SELECT name FROM users WHERE id = $1",
 			userID,
@@ -302,25 +319,401 @@ func community(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data := struct {
-		UserName string
-	}{
-		UserName: userName,
-	}
-
-	tmpl, err := template.ParseFiles("templates/community.html")
+	rows, err := db.Query(
+		`
+        SELECT
+            posts.id,
+            users.name,
+            posts.content,
+            posts.created_at
+        FROM posts
+        JOIN users
+            ON posts.user_id = users.id
+        ORDER BY posts.created_at DESC
+        `,
+	)
 
 	if err != nil {
-		http.Error(w, "Unable to load community page", http.StatusInternalServerError)
+		http.Error(w, "Unable to load posts", http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	var posts []Post
+
+	for rows.Next() {
+
+		var post Post
+
+		err := rows.Scan(
+			&post.ID,
+			&post.UserName,
+			&post.Content,
+			&post.CreatedAt,
+		)
+
+		if err != nil {
+			http.Error(w, "Unable to read posts", http.StatusInternalServerError)
+			return
+		}
+
+		post.Number = len(posts) + 1
+
+		posts = append(posts, post)
+	}
+
+	data := struct {
+		UserName string
+		Posts    []Post
+	}{
+		UserName: userName,
+		Posts:    posts,
+	}
+
+	tmpl, err := template.ParseFiles(
+		"templates/community.html",
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to display community page: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 
 	if err != nil {
-		http.Error(w, "Unable to display community page", http.StatusInternalServerError)
+		http.Error(w, "Unable to display community page: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func createPost(w http.ResponseWriter, r *http.Request) {
+
+	userID := getCurrentUser(r)
+
+	if userID == 0 {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+
+		var userName string
+
+		err := db.QueryRow(
+			"SELECT name FROM users WHERE id = $1",
+			userID,
+		).Scan(&userName)
+
+		if err != nil {
+			http.Error(w, "Unable to load user", http.StatusInternalServerError)
+			return
+		}
+
+		data := struct {
+			UserName string
+		}{
+			UserName: userName,
+		}
+
+		tmpl, err := template.ParseFiles(
+			"templates/create-post.html",
+		)
+
+		if err != nil {
+			http.Error(w, "Unable to load create post page", http.StatusInternalServerError)
+			return
+		}
+
+		err = tmpl.Execute(w, data)
+
+		if err != nil {
+			http.Error(w, "Unable to display create post page", http.StatusInternalServerError)
+			return
+		}
+
+		return
+	}
+
+	if r.Method == http.MethodPost {
+
+		content := strings.TrimSpace(
+			r.FormValue("content"),
+		)
+
+		if content == "" {
+			http.Error(w, "Post cannot be empty", http.StatusBadRequest)
+			return
+		}
+
+		_, err := db.Exec(
+			`
+            INSERT INTO posts (user_id, content)
+            VALUES ($1, $2)
+            `,
+			userID,
+			content,
+		)
+
+		if err != nil {
+			http.Error(w, "Unable to create post", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(
+			w,
+			r,
+			"/community",
+			http.StatusSeeOther,
+		)
+
+		return
+	}
+
+	http.Error(
+		w,
+		"Method not allowed",
+		http.StatusMethodNotAllowed,
+	)
+}
+
+func post(w http.ResponseWriter, r *http.Request) {
+
+	userID := getCurrentUser(r)
+
+	var userName string
+
+	if userID != 0 {
+		err := db.QueryRow(
+			"SELECT name FROM users WHERE id = $1",
+			userID,
+		).Scan(&userName)
+
+		if err != nil {
+			http.Error(w, "Unable to load user", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	postID := r.URL.Query().Get("id")
+
+	var post Post
+
+	err := db.QueryRow(
+		`
+		SELECT
+			posts.id,
+			users.name,
+			posts.content,
+			posts.created_at::TEXT
+		FROM posts
+		JOIN users
+			ON posts.user_id = users.id
+		WHERE posts.id = $1
+		`,
+		postID,
+	).Scan(
+		&post.ID,
+		&post.UserName,
+		&post.Content,
+		&post.CreatedAt,
+	)
+
+	if err != nil {
+		http.Error(w, "Post not found", http.StatusNotFound)
+		return
+	}
+
+	rows, err := db.Query(
+		`
+    SELECT
+        comments.id,
+        users.name,
+        comments.content,
+        comments.created_at::TEXT
+    FROM comments
+    JOIN users
+        ON comments.user_id = users.id
+    WHERE comments.post_id = $1
+    ORDER BY comments.created_at ASC
+    `,
+		postID,
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to load comments", http.StatusInternalServerError)
+		return
+	}
+
+	rows, err = db.Query(
+		`
+    SELECT
+        comments.id,
+        users.name,
+        comments.content,
+        comments.created_at::TEXT
+    FROM comments
+    JOIN users
+        ON comments.user_id = users.id
+    WHERE comments.post_id = $1
+    ORDER BY comments.created_at ASC
+    `,
+		postID,
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to load comments", http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	var comments []Comment
+
+	for rows.Next() {
+
+		var comment Comment
+
+		err := rows.Scan(
+			&comment.ID,
+			&comment.UserName,
+			&comment.Content,
+			&comment.CreatedAt,
+		)
+
+		if err != nil {
+			http.Error(w, "Unable to read comments", http.StatusInternalServerError)
+			return
+		}
+
+		comments = append(comments, comment)
+	}
+
+	data := struct {
+		ID           int
+		UserName     string
+		Content      string
+		PostUserName string
+		CreatedAt    string
+		Comments     []Comment
+	}{
+		ID:           post.ID,
+		UserName:     userName,
+		Content:      post.Content,
+		PostUserName: post.UserName,
+		CreatedAt:    post.CreatedAt,
+		Comments:     comments,
+	}
+
+	tmpl, err := template.ParseFiles(
+		"templates/post.html",
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to load post page: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, data)
+
+	if err != nil {
+		http.Error(w, "Unable to display post page: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func createComment(w http.ResponseWriter, r *http.Request) {
+
+	userID := getCurrentUser(r)
+
+	if userID == 0 {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	postID := r.FormValue("post_id")
+
+	content := strings.TrimSpace(
+		r.FormValue("content"),
+	)
+
+	if content == "" {
+		http.Error(w, "Comment cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.Exec(
+		`
+		INSERT INTO comments (
+			user_id,
+			post_id,
+			content
+		)
+		VALUES ($1, $2, $3)
+		`,
+		userID,
+		postID,
+		content,
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to create comment", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(
+		w,
+		r,
+		"/post?id="+postID,
+		http.StatusSeeOther,
+	)
+}
+
+func likePost(w http.ResponseWriter, r *http.Request) {
+
+	userID := getCurrentUser(r)
+
+	if userID == 0 {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	postID := r.FormValue("post_id")
+
+	_, err := db.Exec(
+		`
+		INSERT INTO post_likes (
+			user_id,
+			post_id
+		)
+		VALUES ($1, $2)
+		`,
+		userID,
+		postID,
+	)
+
+	if err != nil {
+		http.Error(w, "Unable to like post", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(
+		w,
+		r,
+		"/post?id="+postID,
+		http.StatusSeeOther,
+	)
 }
 
 func drafts(w http.ResponseWriter, r *http.Request) {
@@ -1610,11 +2003,16 @@ func main() {
 
 	var err error
 
+	databaseURL := os.Getenv("DATABASE_URL")
+
+	if databaseURL == "" {
+		databaseURL = "dbname=readywriter user=postgres password=readywriter123 sslmode=disable"
+	}
+
 	db, err = sql.Open(
 		"postgres",
-		"dbname=readywriter user=postgres password=readywriter123 sslmode=disable",
+		databaseURL,
 	)
-
 	if err != nil {
 		panic(err)
 	}
@@ -1630,6 +2028,10 @@ func main() {
 	http.HandleFunc("/book", book)
 	http.HandleFunc("/jobs", jobs)
 	http.HandleFunc("/community", community)
+	http.HandleFunc("/post", post)
+	http.HandleFunc("/like-post", likePost)
+	http.HandleFunc("/create-comment", createComment)
+	http.HandleFunc("/create-post", createPost)
 	http.HandleFunc("/drafts", drafts)
 	http.HandleFunc("/write", write)
 	http.HandleFunc("/create-book", createBook)
@@ -1651,7 +2053,17 @@ func main() {
 
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
-	println("ReadyWriter is running at http://localhost:8080")
+	port := os.Getenv("PORT")
 
-	http.ListenAndServe(":8080", nil)
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("ReadyWriter is running on port " + port)
+
+	err = http.ListenAndServe(":"+port, nil)
+
+	if err != nil {
+		panic(err)
+	}
 }

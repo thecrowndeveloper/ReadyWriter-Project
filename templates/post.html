@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{.Content}} — ReadyWriter</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+
+    <header>
+
+        <nav class="main-nav">
+
+            <div class="logo">
+                ReadyWriter
+            </div>
+
+            <div class="nav-links">
+
+                <a href="/">Home</a>
+                <a href="/books">Books</a>
+                <a href="/jobs">Jobs</a>
+                <a href="/community">Community</a>
+
+                {{if .UserName}}
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/logout">Log Out</a>
+                {{else}}
+                    <a href="/login">Log In</a>
+                    <a href="/register">Join Us</a>
+                {{end}}
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <main class="post-page">
+
+        <section class="post-hero">
+
+            <p class="section-label">
+                COMMUNITY
+            </p>
+
+            <h1>
+                {{.Content}}
+            </h1>
+
+            <div class="post-page-meta">
+
+                <span>
+                    {{.PostUserName}}
+                </span>
+
+                <span>
+                    {{.CreatedAt}}
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <section class="post-page-actions">
+
+    <a href="/community" class="text-link">
+        ← Back to Community
+    </a>
+
+    {{if .UserName}}
+
+        <form action="/like-post" method="POST">
+
+            <input
+                type="hidden"
+                name="post_id"
+                value="{{.ID}}"
+            >
+
+            <button type="submit" class="message-button">
+                Like Post ♡
+            </button>
+
+        </form>
+
+    {{end}}
+
+</section>
+
+       
+<section class="comments-section">
+
+    <div class="comments-heading">
+
+        <p class="section-label">
+            COMMENTS
+        </p>
+
+        <p class="comments-count">
+            {{len .Comments}}
+        </p>
+
+    </div>
+
+
+    {{if .Comments}}
+
+        <div class="comments-list">
+
+            {{range .Comments}}
+
+                <article class="comment">
+
+                    <div class="comment-author">
+                        {{.UserName}}
+                    </div>
+
+                    <div class="comment-content">
+                        {{.Content}}
+                    </div>
+
+                    <div class="comment-date">
+                        {{.CreatedAt}}
+                    </div>
+
+                </article>
+
+            {{end}}
+
+        </div>
+
+    {{else}}
+
+        <div class="no-comments">
+
+            <p>
+                No comments yet.
+            </p>
+
+            <p>
+                Start the conversation.
+            </p>
+
+        </div>
+
+    {{end}}
+
+    {{if .UserName}}
+
+    <div class="comment-form">
+
+        <p class="section-label">
+            JOIN THE CONVERSATION
+        </p>
+
+        <form action="/create-comment" method="POST">
+
+            <input
+                type="hidden"
+                name="post_id"
+                value="{{.ID}}"
+            >
+
+            <textarea
+                name="content"
+                rows="5"
+                placeholder="Write a comment..."
+                required
+            ></textarea>
+
+            <button type="submit" class="message-button">
+                Post Comment →
+            </button>
+
+        </form>
+
+    </div>
+
+{{else}}
+
+    <div class="comment-login">
+
+        <p>
+            Log in to join the conversation.
+        </p>
+
+        <a href="/login" class="text-link">
+            Log In →
+        </a>
+
+    </div>
+
+{{end}}
+
+</section>
+
+
+
+    </main>
+
+
+    <footer class="site-footer">
+
+        <p>
+            © 2026 ReadyWriter
+        </p>
+
+        <p>
+            For writers, readers & creators.
+        </p>
+
+    </footer>
+
+
+    <script src="/static/js/main.js"></script>
+
+</body>
+
+</html>

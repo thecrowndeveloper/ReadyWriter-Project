@@ -84,121 +84,40 @@
 
             </div>
 
-            <a href="#" class="message-button">
-                Create a Post →
-            </a>
+           <a href="/create-post" class="message-button">
+    Create a Post →
+</a>
 
         </section>
 
 
         <!-- DEMO POSTS -->
 
-        <section class="community-feed">
+<section class="community-feed">
 
-            <div class="community-feed-heading">
+    <div class="community-feed-heading">
 
-                <p class="section-label">
-                    RECENT CONVERSATIONS
-                </p>
+        <p class="section-label">
+            RECENT CONVERSATIONS
+        </p>
 
-                <p class="community-count">
-                    03 POSTS
-                </p>
+        <p class="community-count">
+            {{len .Posts}} POSTS
+        </p>
 
-            </div>
+    </div>
 
 
-            <article class="community-post">
+    {{if .Posts}}
 
-                <div class="post-number">
-                    01
-                </div>
-
-                <div class="post-content">
-
-                    <p class="post-category">
-                        WRITING
-                    </p>
-
-                    <h2>
-                        How do you stay consistent
-                        when writing a new story?
-                    </h2>
-
-                    <p>
-                        Share your writing routines, habits and
-                        anything that helps you keep going.
-                    </p>
-
-                    <div class="post-meta">
-
-                        <span>
-                            Demo Writer
-                        </span>
-
-                        <span>
-                            4 comments
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <a href="#" class="post-link">
-                    Read →
-                </a>
-
-            </article>
-
+        {{range .Posts}}
 
             <article class="community-post">
 
                 <div class="post-number">
-                    02
+                    {{printf "%02d" .Number}}
                 </div>
 
-                <div class="post-content">
-
-                    <p class="post-category">
-                        READING
-                    </p>
-
-                    <h2>
-                        What makes you
-                        recommend a book?
-                    </h2>
-
-                    <p>
-                        Talk about the characters, stories and
-                        moments that make a book memorable.
-                    </p>
-
-                    <div class="post-meta">
-
-                        <span>
-                            Test Writer
-                        </span>
-
-                        <span>
-                            7 comments
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <a href="#" class="post-link">
-                    Read →
-                </a>
-
-            </article>
-
-
-            <article class="community-post">
-
-                <div class="post-number">
-                    03
-                </div>
 
                 <div class="post-content">
 
@@ -207,36 +126,53 @@
                     </p>
 
                     <h2>
-                        Introduce yourself
-                        to ReadyWriter.
+                        {{.Content}}
                     </h2>
-
-                    <p>
-                        Tell the community what you write,
-                        what you read and what brought you here.
-                    </p>
 
                     <div class="post-meta">
 
                         <span>
-                            ReadyWriter
+                            {{.UserName}}
                         </span>
 
                         <span>
-                            12 comments
+                            {{.CreatedAt}}
                         </span>
 
                     </div>
 
                 </div>
 
-                <a href="#" class="post-link">
-                    Read →
-                </a>
+    <a href="/post?id={{.ID}}" class="post-link">
+        Read →
+    </a>
+                
 
             </article>
 
-        </section>
+        {{end}}
+
+    {{else}}
+
+        <div class="empty-community">
+
+            <p class="section-label">
+                NO POSTS YET
+            </p>
+
+            <h2>
+                Start the first conversation.
+            </h2>
+
+            <a href="/create-post" class="message-button">
+                Create a Post →
+            </a>
+
+        </div>
+
+    {{end}}
+
+</section>
 
     </main>
 

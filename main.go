@@ -1533,9 +1533,9 @@ func register(w http.ResponseWriter, r *http.Request) {
 		PrimaryURL  string
 		PrimaryText string
 	}{
-		Label:       "WELCOME TO READYWRITER",
+		Label:       "WELCOME TO INKHOBBY",
 		Title:       "Account created.",
-		Message:     "Your ReadyWriter account is ready. You can now log in and start exploring.",
+		Message:     "Your InkHobby account is ready. You can now log in and start exploring.",
 		PrimaryURL:  "/login",
 		PrimaryText: "Log In",
 	}
@@ -1596,7 +1596,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, err := store.Get(r, "readywriter-session")
+	session, err := store.Get(r, "InkHobby-session")
 
 	if err != nil {
 		http.Error(w, "Unable to start session", http.StatusInternalServerError)
@@ -1616,12 +1616,12 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 var store = sessions.NewCookieStore(
-	[]byte("readywriter-secret-key"),
+	[]byte("InkHobby-secret-key"),
 )
 
 func getCurrentUser(r *http.Request) int {
 
-	session, err := store.Get(r, "readywriter-session")
+	session, err := store.Get(r, "InkHobby-session")
 
 	if err != nil {
 		return 0
@@ -1638,7 +1638,7 @@ func getCurrentUser(r *http.Request) int {
 
 func logout(w http.ResponseWriter, r *http.Request) {
 
-	session, err := store.Get(r, "readywriter-session")
+	session, err := store.Get(r, "InkHobby-session")
 
 	if err != nil {
 		http.Error(w, "Unable to log out", http.StatusInternalServerError)
@@ -2059,7 +2059,7 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Println("ReadyWriter is running on port " + port)
+	fmt.Println("InkHobby is running on port " + port)
 
 	err = http.ListenAndServe(":"+port, nil)
 

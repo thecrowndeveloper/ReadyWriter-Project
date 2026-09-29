@@ -2428,3 +2428,240 @@ a:hover .arrow {
         height: 78px;
     }
 }
+
+
+/* ==============================
+   STARS & RATINGS (SVG, no emoji)
+   ============================== */
+
+.stars {
+    display: inline-flex;
+    gap: 3px;
+    vertical-align: middle;
+    color: #c9a24b;
+}
+
+.star-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.star-icon.star-empty {
+    color: var(--line);
+}
+
+.book-rating-line,
+.book-rating-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.rating-value {
+    font-weight: 700;
+}
+
+.rating-count,
+.rating-none {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.book-card .stars .star-icon {
+    width: 13px;
+    height: 13px;
+}
+
+.review-stars .stars .star-icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* Interactive star rating input */
+
+.star-input {
+    border: none;
+    padding: 0;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 6px;
+    width: fit-content;
+}
+
+.star-input legend {
+    position: absolute;
+    left: -9999px;
+}
+
+.star-input input[type="radio"] {
+    position: absolute;
+    left: -9999px;
+}
+
+.star-input label {
+    cursor: pointer;
+    font-size: 0;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border-radius: 4px;
+}
+
+.star-input label::before {
+    content: "";
+    display: block;
+    width: 26px;
+    height: 26px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23d3cec5' stroke-width='1.5' d='M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.star-input label:hover,
+.star-input label:hover ~ label,
+.star-input input:checked ~ label {
+    background: transparent;
+}
+
+.star-input label:hover::before,
+.star-input label:hover ~ label::before,
+.star-input input:checked ~ label::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9a24b' stroke='%23c9a24b' stroke-width='1.5' d='M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9z'/%3E%3C/svg%3E");
+}
+
+/* ==============================
+   READER EXPERIENCE
+   ============================== */
+
+.reader-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+    margin-bottom: 40px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+
+.reader-toolbar-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.reader-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.reader-btn {
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.reader-btn:hover {
+    background: var(--text);
+    color: var(--light);
+}
+
+.chapter-nav-book {
+    opacity: 0.7;
+}
+
+/* Text size steps */
+html.text-small .chapter-content { font-size: 16px; }
+html.text-medium .chapter-content { font-size: 19px; }
+html.text-large .chapter-content { font-size: 22px; }
+html.text-xlarge .chapter-content { font-size: 25px; }
+
+/* Reader themes */
+html.reader-sepia body,
+html.reader-sepia {
+    background: #f4ecd9;
+    color: #433422;
+}
+
+html.reader-sepia .chapter-page,
+html.reader-sepia header {
+    background: #f4ecd9;
+    color: #433422;
+}
+
+html.reader-sepia .chapter-content,
+html.reader-sepia .chapter-meta,
+html.reader-sepia .back-to-books {
+    color: #433422;
+}
+
+html.reader-dark body,
+html.reader-dark {
+    background: #14161a;
+    color: #d6d3cd;
+}
+
+html.reader-dark header {
+    border-bottom-color: #2a2d33;
+}
+
+html.reader-dark .chapter-page,
+html.reader-dark .chapter-content,
+html.reader-dark .chapter-meta,
+html.reader-dark .back-to-books,
+html.reader-dark .reader-toolbar,
+html.reader-dark .reader-toolbar-label {
+    background: #14161a;
+    color: #d6d3cd;
+}
+
+html.reader-dark .main-nav a,
+html.reader-dark .logo {
+    color: #d6d3cd;
+}
+
+html.reader-dark .reader-btn {
+    border-color: #3a3e46;
+    color: #d6d3cd;
+}
+
+html.reader-dark .chapter-navigation a {
+    color: #d6d3cd;
+}
+
+/* ==============================
+   SCROLL REVEAL
+   ============================== */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal-visible {
+    opacity: 1;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}

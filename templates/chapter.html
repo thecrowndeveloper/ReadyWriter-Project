@@ -5,12 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{{.Chapter.Title}} | ReadyWriter</title>
+    <title>{{.Chapter.Title}} | InkHobby</title>
 
     <link rel="stylesheet" href="/static/css/style.css">
+
+    <script>
+        // Reader preferences apply before paint so there is no flash.
+        (function () {
+            try {
+                var c = document.cookie.split("; ").find(function (x) {
+                    return x.indexOf("reader_prefs=") === 0;
+                });
+                if (!c) return;
+                var p = JSON.parse(decodeURIComponent(c.split("=").slice(1).join("=")));
+                var cls = [];
+                if (p.theme === "sepia") cls.push("reader-sepia");
+                if (p.theme === "dark") cls.push("reader-dark");
+                if (p.size) cls.push("text-" + p.size);
+                document.documentElement.className += " " + cls.join(" ");
+            } catch (e) {}
+        })();
+    </script>
 </head>
 
-<body>
+<body class="reader-body">
 
     <header>
         <nav class="main-nav">
@@ -32,14 +50,23 @@
     <main class="chapter-page">
 
         <p class="back-to-books">
-            <a href="/books">← Back to Books</a>
+            <a href="/book?id={{.BookID}}">&larr; Back to Book</a>
         </p>
+
+        <div class="reader-toolbar">
+            <span class="reader-toolbar-label">Reading settings</span>
+            <div class="reader-controls">
+                <button type="button" class="reader-btn" data-action="size-down" title="Smaller text">A-</button>
+                <button type="button" class="reader-btn" data-action="size-up" title="Larger text">A+</button>
+                <button type="button" class="reader-btn" data-action="theme" title="Cycle theme">Theme</button>
+            </div>
+        </div>
 
         <h1>{{.Chapter.Title}}</h1>
 
         <p class="chapter-meta">
-    INKHOBBY — CHAPTER {{.Chapter.ID}}
-</p>
+            INKHOBBY — CHAPTER {{.ChapterNumber}}
+        </p>
 
    {{if .IsOwner}}
 
@@ -67,19 +94,78 @@
 
             {{if .HasPrevious}}
                 <a href="/chapter?id={{.PreviousID}}">
-                    ← Previous Chapter
+                    &larr; Previous Chapter
                 </a>
             {{end}}
 
+            <a href="/book?id={{.BookID}}" class="chapter-nav-book">All Chapters</a>
+
             {{if .HasNext}}
                 <a href="/chapter?id={{.NextID}}">
-                    Next Chapter →
+                    Next Chapter &rarr;
                 </a>
             {{end}}
 
         </div>
 
     </main>
+
+    <script>
+        // Reader preferences: text size + theme, persisted in a cookie so
+        // guests keep their settings without an account.
+        (function () {
+            var SIZES = ["small", "medium", "large", "xlarge"];
+            var THEMES = ["light", "sepia", "dark"];
+
+            function getPrefs() {
+                try {
+                    var c = document.cookie.split("; ").find(function (x) {
+                        return x.indexOf("reader_prefs=") === 0;
+                    });
+                    if (c) return JSON.parse(decodeURIComponent(c.split("=").slice(1).join("=")));
+                } catch (e) {}
+                return { size: "medium", theme: "light" };
+            }
+
+            function savePrefs(prefs) {
+                document.cookie = "reader_prefs=" + encodeURIComponent(JSON.stringify(prefs)) +
+                    "; path=/; max-age=31536000; SameSite=Lax";
+            }
+
+            function applyPrefs(prefs) {
+                var root = document.documentElement;
+                SIZES.forEach(function (s) { root.classList.remove("text-" + s); });
+                THEMES.forEach(function (t) {
+                    root.classList.remove("reader-" + t);
+                    if (t !== "light") root.classList.remove(t === "sepia" ? "reader-sepia" : "reader-dark");
+                });
+                root.classList.add("text-" + prefs.size);
+                if (prefs.theme === "sepia") root.classList.add("reader-sepia");
+                if (prefs.theme === "dark") root.classList.add("reader-dark");
+            }
+
+            var prefs = getPrefs();
+
+            document.querySelector(".reader-controls").addEventListener("click", function (ev) {
+                var btn = ev.target.closest("[data-action]");
+                if (!btn) return;
+                var action = btn.getAttribute("data-action");
+                if (action === "size-up" || action === "size-down") {
+                    var i = SIZES.indexOf(prefs.size);
+                    if (i === -1) i = 1;
+                    i += (action === "size-up" ? 1 : -1);
+                    prefs.size = SIZES[Math.max(0, Math.min(SIZES.length - 1, i))];
+                } else if (action === "theme") {
+                    var t = THEMES.indexOf(prefs.theme);
+                    prefs.theme = THEMES[(t + 1) % THEMES.length];
+                }
+                applyPrefs(prefs);
+                savePrefs(prefs);
+            });
+        })();
+    </script>
+
+    <script src="/static/js/main.js"></script>
 
 </body>
 

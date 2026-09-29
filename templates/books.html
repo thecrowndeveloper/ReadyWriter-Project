@@ -43,37 +43,105 @@
         <div class="books-intro">
             <p>
                 Explore books published by writers
-                on InkHobby.
+                on InkHobby. No account needed to read.
             </p>
         </div>
 
-        {{range .}}
+        <!-- DISCOVERY: search + filters (all guest-friendly) -->
 
-        <article class="chapter-card">
+        <form action="/books" method="GET" class="book-search">
 
-            <div>
-   <p>BOOK</p>
-    <h2>{{.Title}}</h2>
+            <input
+                type="text"
+                name="q"
+                placeholder="Search books, synopses, or authors..."
+                value="{{.Search}}"
+            >
 
-    <p class="book-chapter-count">
-    {{.ChapterCount}}
-    {{if eq .ChapterCount 1}}
-        published chapter
-    {{else}}
-        published chapters
-    {{end}}
-</p>
-</div>
+            <select name="genre">
+                <option value="">All genres</option>
+                {{range .Genres}}
+                <option value="{{.}}" {{if eq $.Genre .}}selected{{end}}>{{.}}</option>
+                {{end}}
+            </select>
+
+            <select name="status">
+                <option value="">Any status</option>
+                <option value="ongoing" {{if eq .Status "ongoing"}}selected{{end}}>Ongoing</option>
+                <option value="completed" {{if eq .Status "completed"}}selected{{end}}>Completed</option>
+            </select>
+
+            <select name="sort">
+                <option value="">Popular</option>
+                <option value="updated" {{if eq .Sort "updated"}}selected{{end}}>Recently updated</option>
+                <option value="rating" {{if eq .Sort "rating"}}selected{{end}}>Top rated</option>
+            </select>
+
+            <button type="submit" class="message-button">
+                Search
+            </button>
+
+        </form>
+
+        {{if .HasMore}}
+        <p class="filter-note">
+            Showing filtered results.
+            <a href="/books">Clear filters</a>
+        </p>
+        {{end}}
+
+        {{range .Books}}
+
+        <article class="chapter-card book-card">
+
+            <div class="book-cover">
+                {{if .CoverURL}}
+                <img src="{{.CoverURL}}" alt="{{.Title}} cover">
+                {{else}}
+                <div class="book-cover-placeholder">
+                    {{printf "%.1s" .Title}}
+                </div>
+                {{end}}
+            </div>
+
+            <div class="book-card-body">
+
+                <p class="book-meta">
+                    {{if .Genre}}<span class="book-genre">{{.Genre}}</span>{{end}}
+                    <span class="book-status {{if eq .Status "completed"}}completed{{else}}ongoing{{end}}">
+                        {{if eq .Status "completed"}}Completed{{else}}Ongoing{{end}}
+                    </span>
+                </p>
+
+                <h2>{{.Title}}</h2>
+
+                <p class="book-author">
+                    by {{.AuthorName}}
+                </p>
+
+                <p class="book-chapter-count">
+                    {{.ChapterCount}}
+                    {{if eq .ChapterCount 1}}
+                        published chapter
+                    {{else}}
+                        published chapters
+                    {{end}}
+                    {{if .HasRating}}
+                        · ⭐ {{printf "%.1f" .AvgRating}} ({{.RatingCount}})
+                    {{end}}
+                </p>
+
+            </div>
 
             <a href="/book?id={{.ID}}">
-    Open Book →
-</a>
+                Open Book →
+            </a>
         </article>
 
         {{else}}
 
         <p class="empty-message">
-            No chapters have been published yet.
+            No books match your search yet.
         </p>
 
         {{end}}

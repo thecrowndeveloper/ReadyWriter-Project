@@ -57,10 +57,102 @@
             BOOK
         </p>
 
+        <div class="book-header">
 
-        <h1>
-    {{.Book.Title}}
-</h1>
+            <div class="book-cover book-cover-large">
+                {{if .Book.CoverURL}}
+                <img src="{{.Book.CoverURL}}" alt="{{.Book.Title}} cover">
+                {{else}}
+                <div class="book-cover-placeholder">
+                    {{printf "%.1s" .Book.Title}}
+                </div>
+                {{end}}
+            </div>
+
+            <div class="book-header-info">
+
+                <h1>{{.Book.Title}}</h1>
+
+                <p class="book-author">
+                    ✍️ by {{.Book.AuthorName}}
+                </p>
+
+                <p class="book-meta">
+                    {{if .Book.Genre}}<span class="book-genre">{{.Book.Genre}}</span>{{end}}
+                    <span class="book-status {{if eq .Book.Status "completed"}}completed{{else}}ongoing{{end}}">
+                        {{if eq .Book.Status "completed"}}Completed{{else}}Ongoing{{end}}
+                    </span>
+                </p>
+
+                <p class="book-chapter-count">
+                    📚 {{.Book.ChapterCount}}
+                    {{if eq .Book.ChapterCount 1}}chapter{{else}}chapters{{end}}
+                    {{if .Book.HasRating}}
+                        · ⭐ {{printf "%.1f" .Book.AvgRating}}
+                        ({{.Book.RatingCount}}
+                        {{if eq .Book.RatingCount 1}}review{{else}}reviews{{end}})
+                    {{else}}
+                        · Not yet rated
+                    {{end}}
+                </p>
+
+                <div class="book-actions">
+
+                    {{if .UserID}}
+
+                    {{if .IsSaved}}
+
+                    <form action="/unsave-book" method="POST">
+
+                        <input
+                            type="hidden"
+                            name="book_id"
+                            value="{{.Book.ID}}"
+                        >
+
+                        <button type="submit" class="message-button">
+                            🔖 Saved — Unsave
+                        </button>
+
+                    </form>
+
+                    {{else}}
+
+                    <form action="/save-book" method="POST">
+
+                        <input
+                            type="hidden"
+                            name="book_id"
+                            value="{{.Book.ID}}"
+                        >
+
+                        <button type="submit" class="message-button">
+                            🔖 Save Book
+                        </button>
+
+                    </form>
+
+                    {{end}}
+
+                    {{else}}
+
+                    <a href="/login" class="message-button login-hint">
+                        🔖 Save Book (login required)
+                    </a>
+
+                    {{end}}
+
+                    {{if gt .Book.ChapterCount 0}}
+                    <a href="/chapter?id={{(index .Chapters 0).ID}}" class="read-button">
+                        Start Reading →
+                    </a>
+                    {{end}}
+
+                </div>
+
+            </div>
+
+        </div>
 
 <div class="book-description">
 
@@ -82,61 +174,23 @@
 
 </div>
 
-        <div class="book-actions">
-
-    {{if .IsSaved}}
-
-    <form action="/unsave-book" method="POST">
-
-        <input
-            type="hidden"
-            name="book_id"
-            value="{{.Book.ID}}"
-        >
-
-        <button type="submit" class="message-button">
-            Unsave Book
-        </button>
-
-    </form>
-
-{{else}}
-
-    <form action="/save-book" method="POST">
-
-        <input
-            type="hidden"
-            name="book_id"
-            value="{{.Book.ID}}"
-        >
-
-        <button type="submit" class="message-button">
-            Save Book
-        </button>
-
-    </form>
-
-{{end}}
-</div>
-
-
-        {{range .Chapters}}
+        {{range $i, $chapter := .Chapters}}
 
         <article class="chapter-card">
 
             <div>
 
                 <p>
-                    CHAPTER {{.ID}}
+                    CHAPTER {{add1 $i}}
                 </p>
 
                 <h2>
-                    {{.Title}}
+                    {{$chapter.Title}}
                 </h2>
 
             </div>
 
-            <a href="/chapter?id={{.ID}}">
+            <a href="/chapter?id={{$chapter.ID}}">
     Read Chapter <span class="arrow"></span>
 </a>
         </article>
@@ -149,6 +203,90 @@
 
         {{end}}
 
+        <!-- REVIEWS -->
+
+        <section class="reviews-section">
+
+            <p class="section-label">
+                💬 REVIEWS
+            </p>
+
+            {{if .UserID}}
+
+            <form action="/create-review" method="POST" class="review-form">
+
+                <input
+                    type="hidden"
+                    name="book_id"
+                    value="{{.Book.ID}}"
+                >
+
+                {{if .HasReviewed}}
+                <p class="filter-note">Already reviewed — submitting again updates your review.</p>
+                {{end}}
+
+                <label>
+                    Your rating:
+                    <select name="rating" required>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 — Loved it</option>
+                        <option value="4">⭐⭐⭐⭐ 4 — Great</option>
+                        <option value="3">⭐⭐⭐ 3 — Good</option>
+                        <option value="2">⭐⭐ 2 — Okay</option>
+                        <option value="1">⭐ 1 — Not for me</option>
+                    </select>
+                </label>
+
+                <textarea
+                    name="content"
+                    placeholder="Share your thoughts about this book (optional)..."
+                    rows="4"
+                    maxlength="2000"
+                ></textarea>
+
+                <button type="submit" class="message-button">
+                    {{if .HasReviewed}}Update Review{{else}}Post Review{{end}}
+                </button>
+
+            </form>
+
+            {{else}}
+
+            <p class="empty-message">
+                <a href="/login">Log in</a> or
+                <a href="/register">create a free account</a>
+                to leave a review.
+            </p>
+
+            {{end}}
+
+                    {{range $i, $review := .Reviews}}
+
+                    <article class="review-card">
+
+                        <p class="review-header">
+                            <strong>{{.UserName}}</strong>
+                            <span class="review-stars">{{repeat "⭐" .Rating}}{{repeat "☆" (sub 5 .Rating)}}</span>
+                            <span class="review-date">{{.CreatedAt}}</span>
+                        </p>
+
+                        {{if .Content}}
+                        <p class="review-content">
+                            {{.Content}}
+                        </p>
+                        {{end}}
+
+                    </article>
+
+                    {{else}}
+
+                    <p class="empty-message">
+                        No reviews yet. Be the first!
+                    </p>
+
+                    {{end}}
+
+        </section>
+
     </main>
 
 </body>
@@ -157,14 +295,16 @@
     const menuButton = document.querySelector(".menu-toggle");
     const mainNav = document.querySelector(".main-nav");
 
-    menuButton.addEventListener("click", function () {
-        const isOpen = mainNav.classList.toggle("menu-open");
+    if (menuButton) {
+        menuButton.addEventListener("click", function () {
+            const isOpen = mainNav.classList.toggle("menu-open");
 
-        menuButton.setAttribute("aria-expanded", isOpen);
-        menuButton.setAttribute(
-            "aria-label",
-            isOpen ? "Close menu" : "Open menu"
-        );
-    });
+            menuButton.setAttribute("aria-expanded", isOpen);
+            menuButton.setAttribute(
+                "aria-label",
+                isOpen ? "Close menu" : "Open menu"
+            );
+        });
+    }
 </script>
 </html>

@@ -44,8 +44,26 @@ type Book struct {
 	ID           int
 	Title        string
 	Description  string
+	CoverURL     string
+	Genre        string
+	Status       string
+	AuthorName   string
 	ChapterCount int
+	RatingCount  int
+	AvgRating    float64
 	UserID       int
+}
+
+// HasRating returns whether anyone has rated this book yet.
+func (b Book) HasRating() bool {
+	return b.RatingCount > 0
+}
+
+type Review struct {
+	UserName  string
+	Rating    int
+	Content   string
+	CreatedAt string
 }
 
 type ChapterPage struct {
@@ -76,6 +94,23 @@ type Comment struct {
 
 var db *sql.DB
 
+// templateFuncs are helpers available in every page template.
+var templateFuncs = template.FuncMap{
+	"add1": func(i int) int { return i + 1 },
+	"sub":  func(a, b int) int { return a - b },
+	"repeat": func(s string, n int) string {
+		if n < 0 {
+			n = 0
+		}
+		return strings.Repeat(s, n)
+	},
+}
+
+// parseTemplate loads one template file with the shared helper funcs.
+func parseTemplate(name string) (*template.Template, error) {
+	return template.New(name).Funcs(templateFuncs).ParseFiles("templates/" + name)
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
 
 	userID := getCurrentUser(r)
@@ -104,7 +139,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		UserRole: userRole,
 	}
 
-	tmpl, err := template.ParseFiles("templates/index.html")
+	tmpl, err := parseTemplate("index.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load page", http.StatusInternalServerError)
@@ -114,26 +149,69 @@ func home(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, data)
 }
 
-func books(w http.ResponseWriter, r *http.Request) {
-
-	rows, err := db.Query(`
-    SELECT
+// bookListQuery returns the shared SELECT used by the browse/search pages.
+// It joins in the author name and aggregates published chapter counts and
+// star ratings so guests can see everything without logging in.
+const bookListQuery = `
+SELECT
     books.id,
     books.title,
     books.description,
-    COUNT(chapters.id) AS chapter_count,
-    books.user_id
+    books.cover_url,
+    books.genre,
+    books.status,
+    users.name,
+    COUNT(DISTINCT chapters.id) AS chapter_count,
+    books.rating_count,
+    CASE WHEN books.rating_count > 0
+         THEN books.rating_total::NUMERIC / books.rating_count
+         ELSE 0 END AS avg_rating
 FROM books
+JOIN users ON books.user_id = users.id
 LEFT JOIN chapters
     ON books.id = chapters.book_id
     AND chapters.status = 'published'
-GROUP BY books.id, books.title, books.description, books.user_id
-ORDER BY books.id DESC
-`)
+WHERE ($1 = '' OR LOWER(books.title) LIKE '%' || LOWER($1) || '%'
+       OR LOWER(books.description) LIKE '%' || LOWER($1) || '%'
+       OR LOWER(users.name) LIKE '%' || LOWER($1) || '%')
+  AND ($2 = '' OR LOWER(books.genre) = LOWER($2))
+  AND ($3 = '' OR books.status = $3)
+GROUP BY books.id, books.title, books.description, books.cover_url,
+         books.genre, books.status, users.name
+ORDER BY %s
+`
+
+func bookOrderFor(sortKey string) string {
+	switch sortKey {
+	case "updated":
+		return "MAX(chapters.id) DESC NULLS LAST"
+	case "rating":
+		return "avg_rating DESC, books.rating_count DESC"
+	default: // popular: most reviews, then most chapters
+		return "books.rating_count DESC, COUNT(DISTINCT chapters.id) DESC"
+	}
+}
+
+func queryBooks(search, genre, status, sortKey string) ([]Book, error) {
+
+	// Validate the sort key so the ORDER BY fragment is never user input.
+	switch sortKey {
+	case "updated", "rating", "popular", "":
+	default:
+		sortKey = "popular"
+	}
+
+	// The query uses Postgres $1..$3 placeholders plus a single %s for the
+	// (whitelisted) ORDER BY clause, so replace it directly instead of
+	// fmt.Sprintf to avoid clashing with SQL LIKE '%' patterns.
+	sql := strings.Replace(bookListQuery, "%s", bookOrderFor(sortKey), 1)
+
+	rows, err := db.Query(
+		sql,
+		search, genre, status,
+	)
 	if err != nil {
-		fmt.Println("Scan error:", err)
-		http.Error(w, "Unable to read book", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	defer rows.Close()
@@ -148,25 +226,93 @@ ORDER BY books.id DESC
 			&book.ID,
 			&book.Title,
 			&book.Description,
+			&book.CoverURL,
+			&book.Genre,
+			&book.Status,
+			&book.AuthorName,
 			&book.ChapterCount,
-			&book.UserID,
+			&book.RatingCount,
+			&book.AvgRating,
 		)
 		if err != nil {
-			http.Error(w, "Unable to read book", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
 
 		books = append(books, book)
 	}
 
-	tmpl, err := template.ParseFiles("templates/books.html")
+	return books, nil
+}
+
+func genres() []string {
+
+	rows, err := db.Query(`
+	SELECT DISTINCT genre FROM books
+	WHERE genre <> '' ORDER BY genre ASC
+	`)
+	if err != nil {
+		return nil
+	}
+
+	defer rows.Close()
+
+	var genres []string
+
+	for rows.Next() {
+		var g string
+		if err := rows.Scan(&g); err != nil {
+			continue
+		}
+		genres = append(genres, g)
+	}
+
+	return genres
+}
+
+func books(w http.ResponseWriter, r *http.Request) {
+
+	search := strings.TrimSpace(r.URL.Query().Get("q"))
+	genre := strings.TrimSpace(r.URL.Query().Get("genre"))
+	status := strings.TrimSpace(r.URL.Query().Get("status"))
+	sortKey := strings.TrimSpace(r.URL.Query().Get("sort"))
+
+	if status != "ongoing" && status != "completed" {
+		status = ""
+	}
+
+	bookList, err := queryBooks(search, genre, status, sortKey)
+	if err != nil {
+		fmt.Println("Books query error:", err)
+		http.Error(w, "Unable to read book", http.StatusInternalServerError)
+		return
+	}
+
+	data := struct {
+		Books   []Book
+		Genres  []string
+		Search  string
+		Genre   string
+		Status  string
+		Sort    string
+		HasMore bool
+	}{
+		Books:   bookList,
+		Genres:  genres(),
+		Search:  search,
+		Genre:   genre,
+		Status:  status,
+		Sort:    sortKey,
+		HasMore: search != "" || genre != "" || status != "" || sortKey != "",
+	}
+
+	tmpl, err := parseTemplate("books.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load books page", http.StatusInternalServerError)
 		return
 	}
 
-	err = tmpl.Execute(w, books)
+	err = tmpl.Execute(w, data)
 
 	if err != nil {
 		http.Error(w, "Unable to display books page", http.StatusInternalServerError)
@@ -181,12 +327,40 @@ func book(w http.ResponseWriter, r *http.Request) {
 	var currentBook Book
 
 	err := db.QueryRow(
-		"SELECT id, title, description FROM books WHERE id = $1",
+		`
+	SELECT
+		books.id,
+		books.title,
+		books.description,
+		books.cover_url,
+		books.genre,
+		books.status,
+		users.name,
+		(
+			SELECT COUNT(*) FROM chapters
+			WHERE chapters.book_id = books.id
+			  AND chapters.status = 'published'
+		),
+		books.rating_count,
+		CASE WHEN books.rating_count > 0
+		     THEN books.rating_total::NUMERIC / books.rating_count
+		     ELSE 0 END
+	FROM books
+	JOIN users ON books.user_id = users.id
+	WHERE books.id = $1
+	`,
 		id,
 	).Scan(
 		&currentBook.ID,
 		&currentBook.Title,
 		&currentBook.Description,
+		&currentBook.CoverURL,
+		&currentBook.Genre,
+		&currentBook.Status,
+		&currentBook.AuthorName,
+		&currentBook.ChapterCount,
+		&currentBook.RatingCount,
+		&currentBook.AvgRating,
 	)
 	if err != nil {
 		http.Error(w, "Book not found", http.StatusNotFound)
@@ -225,9 +399,47 @@ func book(w http.ResponseWriter, r *http.Request) {
 		chapters = append(chapters, chapter)
 	}
 
+	// Guest-readable reviews: newest first.
+	reviewRows, err := db.Query(
+		`
+	SELECT users.name, reviews.rating, reviews.content,
+	       TO_CHAR(reviews.created_at, 'Mon 2, 2006')
+	FROM reviews
+	JOIN users ON reviews.user_id = users.id
+	WHERE reviews.book_id = $1
+	ORDER BY reviews.id DESC
+	LIMIT 50
+	`,
+		id,
+	)
+
+	var reviews []Review
+
+	if err == nil {
+
+		defer reviewRows.Close()
+
+		for reviewRows.Next() {
+
+			var review Review
+
+			if err := reviewRows.Scan(
+				&review.UserName,
+				&review.Rating,
+				&review.Content,
+				&review.CreatedAt,
+			); err != nil {
+				continue
+			}
+
+			reviews = append(reviews, review)
+		}
+	}
+
 	userID := getCurrentUser(r)
 
 	isSaved := false
+	hasReviewed := false
 
 	if userID != 0 {
 
@@ -241,19 +453,36 @@ func book(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Unable to check saved book", http.StatusInternalServerError)
 			return
 		}
+
+		err = db.QueryRow(
+			"SELECT EXISTS (SELECT 1 FROM reviews WHERE user_id = $1 AND book_id = $2)",
+			userID,
+			id,
+		).Scan(&hasReviewed)
+
+		if err != nil {
+			http.Error(w, "Unable to check review", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	data := struct {
-		Book     Book
-		Chapters []Chapter
-		IsSaved  bool
+		Book        Book
+		Chapters    []Chapter
+		Reviews     []Review
+		IsSaved     bool
+		HasReviewed bool
+		UserID      int
 	}{
-		Book:     currentBook,
-		Chapters: chapters,
-		IsSaved:  isSaved,
+		Book:        currentBook,
+		Chapters:    chapters,
+		Reviews:     reviews,
+		IsSaved:     isSaved,
+		HasReviewed: hasReviewed,
+		UserID:      userID,
 	}
 
-	tmpl, err := template.ParseFiles("templates/book.html")
+	tmpl, err := parseTemplate("book.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load book page", http.StatusInternalServerError)
@@ -266,6 +495,105 @@ func book(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to display book page", http.StatusInternalServerError)
 		return
 	}
+}
+
+func createReview(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := getCurrentUser(r)
+
+	if userID == 0 {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	bookID := r.FormValue("book_id")
+
+	var rating int
+
+	_, err := fmt.Sscanf(r.FormValue("rating"), "%d", &rating)
+	if err != nil || rating < 1 || rating > 5 {
+		http.Error(w, "Rating must be between 1 and 5", http.StatusBadRequest)
+		return
+	}
+
+	content := strings.TrimSpace(r.FormValue("content"))
+
+	if len(content) > 2000 {
+		content = content[:2000]
+	}
+
+	txErr := func() error {
+
+		var existing int
+
+		err := db.QueryRow(
+			"SELECT id FROM reviews WHERE user_id = $1 AND book_id = $2",
+			userID, bookID,
+		).Scan(&existing)
+
+		if err == sql.ErrNoRows {
+
+			_, err = db.Exec(
+				`INSERT INTO reviews (user_id, book_id, rating, content)
+				 VALUES ($1, $2, $3, $4)`,
+				userID, bookID, rating, content,
+			)
+			if err != nil {
+				return err
+			}
+
+			_, err = db.Exec(
+				`UPDATE books
+				 SET rating_total = rating_total + $1,
+				     rating_count = rating_count + 1
+				 WHERE id = $2`,
+				rating, bookID,
+			)
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+
+		var oldRating int
+
+		err = db.QueryRow(
+			"SELECT rating FROM reviews WHERE id = $1", existing,
+		).Scan(&oldRating)
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Exec(
+			"UPDATE reviews SET rating = $1, content = $2 WHERE id = $3",
+			rating, content, existing,
+		)
+		if err != nil {
+			return err
+		}
+
+		_, err = db.Exec(
+			`UPDATE books
+			 SET rating_total = rating_total - $1 + $2
+			 WHERE id = $3`,
+			oldRating, rating, bookID,
+		)
+		return err
+	}()
+
+	if txErr != nil {
+		fmt.Println("Review error:", txErr)
+		http.Error(w, "Unable to save review", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/book?id="+bookID, http.StatusSeeOther)
 }
 
 func jobs(w http.ResponseWriter, r *http.Request) {
@@ -292,7 +620,7 @@ func jobs(w http.ResponseWriter, r *http.Request) {
 		UserName: userName,
 	}
 
-	tmpl, err := template.ParseFiles("templates/jobs.html")
+	tmpl, err := parseTemplate("jobs.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load jobs page", http.StatusInternalServerError)
@@ -394,9 +722,7 @@ func community(w http.ResponseWriter, r *http.Request) {
 		Posts:    posts,
 	}
 
-	tmpl, err := template.ParseFiles(
-		"templates/community.html",
-	)
+	tmpl, err := parseTemplate("community.html")
 
 	if err != nil {
 		http.Error(w, "Unable to display community page: "+err.Error(), http.StatusInternalServerError)
@@ -440,9 +766,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 			UserName: userName,
 		}
 
-		tmpl, err := template.ParseFiles(
-			"templates/create-post.html",
-		)
+		tmpl, err := parseTemplate("create-post.html")
 
 		if err != nil {
 			http.Error(w, "Unable to load create post page", http.StatusInternalServerError)
@@ -640,9 +964,7 @@ func post(w http.ResponseWriter, r *http.Request) {
 		LikedByMe:    likedByMe,
 	}
 
-	tmpl, err := template.ParseFiles(
-		"templates/post.html",
-	)
+	tmpl, err := parseTemplate("post.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load post page: "+err.Error(), http.StatusInternalServerError)
@@ -830,7 +1152,7 @@ ORDER BY chapters.id DESC
 		drafts = append(drafts, draft)
 	}
 
-	tmpl, err := template.ParseFiles("templates/drafts.html")
+	tmpl, err := parseTemplate("drafts.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load drafts page", http.StatusInternalServerError)
@@ -932,7 +1254,7 @@ AND chapters.status = 'published'
 		IsOwner:     isOwner,
 	}
 
-	tmpl, err := template.ParseFiles("templates/chapter.html")
+	tmpl, err := parseTemplate("chapter.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load chapter page", http.StatusInternalServerError)
@@ -981,7 +1303,7 @@ func edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("templates/edit.html")
+	tmpl, err := parseTemplate("edit.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load edit page", http.StatusInternalServerError)
@@ -1265,7 +1587,7 @@ func write(w http.ResponseWriter, r *http.Request) {
 		books = append(books, book)
 	}
 
-	tmpl, err := template.ParseFiles("templates/write.html")
+	tmpl, err := parseTemplate("write.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load writing page", http.StatusInternalServerError)
@@ -1416,7 +1738,7 @@ func publish(w http.ResponseWriter, r *http.Request) {
 		PrimaryText: "View Dashboard",
 	}
 
-	tmpl, err := template.ParseFiles("templates/message.html")
+	tmpl, err := parseTemplate("message.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load message page", http.StatusInternalServerError)
@@ -1459,11 +1781,22 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 
 	title := r.FormValue("title")
 	description := strings.TrimSpace(r.FormValue("description"))
+	coverURL := strings.TrimSpace(r.FormValue("cover_url"))
+	genre := strings.TrimSpace(r.FormValue("genre"))
+
+	status := strings.TrimSpace(r.FormValue("status"))
+	if status != "completed" {
+		status = "ongoing"
+	}
 
 	_, err = db.Exec(
-		"INSERT INTO books (title, description, user_id) VALUES ($1, $2, $3)",
+		`INSERT INTO books (title, description, cover_url, genre, status, user_id)
+		 VALUES ($1, $2, $3, $4, $5, $6)`,
 		title,
 		description,
+		coverURL,
+		genre,
+		status,
 		userID,
 	)
 	if err != nil {
@@ -1546,7 +1879,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
-		tmpl, err := template.ParseFiles("templates/register.html")
+		tmpl, err := parseTemplate("register.html")
 
 		if err != nil {
 			http.Error(w, "Unable to load registration page", http.StatusInternalServerError)
@@ -1604,7 +1937,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 		PrimaryText: "Log In",
 	}
 
-	tmpl, err := template.ParseFiles("templates/message.html")
+	tmpl, err := parseTemplate("message.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load message page", http.StatusInternalServerError)
@@ -1618,7 +1951,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
-		tmpl, err := template.ParseFiles("templates/login.html")
+		tmpl, err := parseTemplate("login.html")
 
 		if err != nil {
 			http.Error(w, "Unable to load login page", http.StatusInternalServerError)
@@ -1912,7 +2245,7 @@ func dashboard(w http.ResponseWriter, r *http.Request) {
 		ActiveDays:  activeDays,
 	}
 
-	tmpl, err := template.ParseFiles("templates/dashboard.html")
+	tmpl, err := parseTemplate("dashboard.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load dashboard", http.StatusInternalServerError)
@@ -2031,7 +2364,7 @@ func earnings(w http.ResponseWriter, r *http.Request) {
 		earnings = append(earnings, earning)
 	}
 
-	tmpl, err := template.ParseFiles("templates/earnings.html")
+	tmpl, err := parseTemplate("earnings.html")
 
 	if err != nil {
 		http.Error(w, "Unable to load earnings page", http.StatusInternalServerError)
@@ -2101,6 +2434,7 @@ func main() {
 	http.HandleFunc("/create-book", createBook)
 	http.HandleFunc("/save-book", saveBook)
 	http.HandleFunc("/unsave-book", unsaveBook)
+	http.HandleFunc("/create-review", createReview)
 	http.HandleFunc("/publish", publish)
 	http.HandleFunc("/publish-draft", publishDraft)
 	http.HandleFunc("/chapter", chapter)

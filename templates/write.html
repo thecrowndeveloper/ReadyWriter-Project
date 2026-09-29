@@ -75,6 +75,26 @@
     required
 ></textarea>
 
+                <input
+                    type="text"
+                    name="genre"
+                    placeholder="Genre (e.g. Fantasy, Romance, Sci-Fi)"
+                >
+
+                <input
+                    type="url"
+                    name="cover_url"
+                    placeholder="Cover image URL (optional)"
+                >
+
+                <label class="book-status-label">
+                    Status:
+                    <select name="status">
+                        <option value="ongoing">Ongoing</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </label>
+
                 <button type="submit">
                     + Create Book
                 </button>

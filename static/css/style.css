@@ -693,6 +693,30 @@ header {
     margin-bottom: 110px;
 }
 
+.book-description {
+    max-width: 700px;
+
+    margin-bottom: 75px;
+
+    padding-left: 24px;
+
+    border-left: 1px solid var(--line);
+}
+
+.book-description .section-label {
+    margin-bottom: 22px;
+}
+
+.book-description p:last-child {
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 19px;
+
+    line-height: 1.8;
+}
+
 .books-intro p {
     color: var(--muted);
 
@@ -1119,6 +1143,11 @@ footer {
     letter-spacing: 1.5px;
 }
 
+
+.menu-toggle {
+    display: none;
+}
+
 /* ==============================
    MOBILE
    ============================== */
@@ -1231,18 +1260,52 @@ footer {
 }
 
     .main-nav {
-        align-items: flex-start;
+    position: relative;
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0;
+}
 
-        flex-direction: column;
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
 
-        gap: 22px;
-    }
+    width: 42px;
+    height: 42px;
 
-    .nav-links {
-        flex-wrap: wrap;
+    padding: 10px;
+    border: 1px solid var(--line);
+    background: transparent;
+    cursor: pointer;
+}
 
-        gap: 14px 20px;
-    }
+.menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 1.5px;
+    background: var(--text);
+}
+
+.nav-links {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 22px;
+
+    width: 100%;
+    padding: 25px 0 10px;
+}
+
+.main-nav.menu-open .nav-links {
+    display: flex;
+}
+
+.menu-toggle {
+    display: flex;
+}
 
     .hero {
         min-height: 80vh;
@@ -1290,6 +1353,20 @@ footer {
 
         gap: 25px;
     }
+
+    .book-description {
+    max-width: none;
+
+    margin-bottom: 60px;
+
+    padding-left: 18px;
+}
+
+.book-description p:last-child {
+    font-size: 17px;
+
+    line-height: 1.75;
+}
 
     .chapter-card:hover {
         padding-left: 10px;
@@ -2114,4 +2191,28 @@ footer {
         justify-self: start;
     }
 
+}
+
+/* ==============================
+   INKHOBBY ARROWS
+   ============================== */
+
+.arrow {
+    display: inline-block;
+
+    width: 9px;
+    height: 9px;
+
+    margin-left: 10px;
+
+    border-top: 1.5px solid currentColor;
+    border-right: 1.5px solid currentColor;
+
+    transform: rotate(45deg);
+
+    transition: transform 0.3s ease;
+}
+
+a:hover .arrow {
+    transform: rotate(45deg) translate(3px, -3px);
 }

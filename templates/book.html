@@ -16,23 +16,33 @@
 
     <header>
 
-        <nav class="main-nav">
+       <nav class="main-nav">
 
-            <a href="/" class="logo">
-                InkHobby
-            </a>
+    <a href="/" class="logo">
+        InkHobby
+    </a>
 
-            <div class="nav-links">
+    <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded="false"
+    >
+        <span></span>
+        <span></span>
+    </button>
 
-                <a href="/">Home</a>
-                <a href="/books">Books</a>
-                <a href="/drafts">My Drafts</a>
-                <a href="/jobs">Jobs</a>
-                <a href="/community">Community</a>
+    <div class="nav-links">
 
-            </div>
+        <a href="/">Home</a>
+        <a href="/books">Books</a>
+        <a href="/drafts">My Drafts</a>
+        <a href="/jobs">Jobs</a>
+        <a href="/community">Community</a>
 
-        </nav>
+    </div>
+
+</nav>
 
     </header>
 
@@ -47,17 +57,30 @@
             BOOK
         </p>
 
+
         <h1>
-            {{.Book.Title}}
-        </h1>
+    {{.Book.Title}}
+</h1>
 
-        <div class="books-intro">
+<div class="book-description">
 
-            <p>
-                Published chapters from this book.
-            </p>
+    <p class="section-label">
+        SYNOPSIS
+    </p>
 
-        </div>
+    <p>
+        {{.Book.Description}}
+    </p>
+
+</div>
+
+<div class="books-intro">
+
+    <p>
+        Published chapters from this book.
+    </p>
+
+</div>
 
         <div class="book-actions">
 
@@ -114,9 +137,8 @@
             </div>
 
             <a href="/chapter?id={{.ID}}">
-                Read Chapter →
-            </a>
-
+    Read Chapter <span class="arrow"></span>
+</a>
         </article>
 
         {{else}}
@@ -131,4 +153,18 @@
 
 </body>
 
+<script>
+    const menuButton = document.querySelector(".menu-toggle");
+    const mainNav = document.querySelector(".main-nav");
+
+    menuButton.addEventListener("click", function () {
+        const isOpen = mainNav.classList.toggle("menu-open");
+
+        menuButton.setAttribute("aria-expanded", isOpen);
+        menuButton.setAttribute(
+            "aria-label",
+            isOpen ? "Close menu" : "Open menu"
+        );
+    });
+</script>
 </html>

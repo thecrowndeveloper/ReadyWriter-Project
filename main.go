@@ -41,10 +41,11 @@ type SavedBook struct {
 }
 
 type Book struct {
-	ID           int
-	Title        string
-	ChapterCount int
-	UserID       int
+    ID           int
+    Title        string
+    Description  string
+    ChapterCount int
+    UserID       int
 }
 
 type ChapterPage struct {
@@ -115,18 +116,18 @@ func books(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := db.Query(`
     SELECT
-        books.id,
-        books.title,
-        COUNT(chapters.id) AS chapter_count,
-books.user_id
-    FROM books
-    LEFT JOIN chapters
-        ON books.id = chapters.book_id
-        AND chapters.status = 'published'
-    GROUP BY books.id, books.title, books.user_id
-    ORDER BY books.id DESC
+    books.id,
+    books.title,
+    books.description,
+    COUNT(chapters.id) AS chapter_count,
+    books.user_id
+FROM books
+LEFT JOIN chapters
+    ON books.id = chapters.book_id
+    AND chapters.status = 'published'
+GROUP BY books.id, books.title, books.description, books.user_id
+ORDER BY books.id DESC
 `)
-
 	if err != nil {
 		fmt.Println("Scan error:", err)
 		http.Error(w, "Unable to read book", http.StatusInternalServerError)
@@ -142,11 +143,12 @@ books.user_id
 		var book Book
 
 		err := rows.Scan(
-			&book.ID,
-			&book.Title,
-			&book.ChapterCount,
-			&book.UserID,
-		)
+    &book.ID,
+    &book.Title,
+    &book.Description,
+    &book.ChapterCount,
+    &book.UserID,
+)
 		if err != nil {
 			http.Error(w, "Unable to read book", http.StatusInternalServerError)
 			return
@@ -177,10 +179,13 @@ func book(w http.ResponseWriter, r *http.Request) {
 	var currentBook Book
 
 	err := db.QueryRow(
-		"SELECT id, title FROM books WHERE id = $1",
-		id,
-	).Scan(&currentBook.ID, &currentBook.Title)
-
+    "SELECT id, title, description FROM books WHERE id = $1",
+    id,
+).Scan(
+    &currentBook.ID,
+    &currentBook.Title,
+    &currentBook.Description,
+)
 	if err != nil {
 		http.Error(w, "Book not found", http.StatusNotFound)
 		return
@@ -1396,12 +1401,14 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	title := r.FormValue("title")
+	description := strings.TrimSpace(r.FormValue("description"))
 
 	_, err = db.Exec(
-		"INSERT INTO books (title, user_id) VALUES ($1, $2)",
-		title,
-		userID,
-	)
+    "INSERT INTO books (title, description, user_id) VALUES ($1, $2, $3)",
+    title,
+    description,
+    userID,
+)
 	if err != nil {
 		http.Error(w, "Unable to create book", http.StatusInternalServerError)
 		return

@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
+	"math"
 	"net/http"
 	"os"
 	"strings"
@@ -66,13 +67,18 @@ type Review struct {
 	CreatedAt string
 }
 
+// RatingFloat lets the stars template func accept an int rating directly.
+func (r Review) RatingFloat() float64 { return float64(r.Rating) }
+
 type ChapterPage struct {
-	Chapter     Chapter
-	PreviousID  int
-	NextID      int
-	HasPrevious bool
-	HasNext     bool
-	IsOwner     bool
+	Chapter       Chapter
+	BookID        int
+	ChapterNumber int
+	PreviousID    int
+	NextID        int
+	HasPrevious   bool
+	HasNext       bool
+	IsOwner       bool
 }
 
 type Post struct {
@@ -95,6 +101,19 @@ type Comment struct {
 var db *sql.DB
 
 // templateFuncs are helpers available in every page template.
+// starSVG renders one inline SVG star (no emoji anywhere in the UI).
+func starSVG(filled bool) template.HTML {
+	cls := "star-icon"
+	fill := "currentColor"
+	if !filled {
+		cls += " star-empty"
+		fill = "none"
+	}
+	return template.HTML(fmt.Sprintf(
+		`<svg class="%s" viewBox="0 0 24 24" aria-hidden="true"><path fill="%s" stroke="currentColor" stroke-width="1.5" d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>`,
+		cls, fill))
+}
+
 var templateFuncs = template.FuncMap{
 	"add1": func(i int) int { return i + 1 },
 	"sub":  func(a, b int) int { return a - b },
@@ -103,6 +122,17 @@ var templateFuncs = template.FuncMap{
 			n = 0
 		}
 		return strings.Repeat(s, n)
+	},
+	// stars renders a 5-star rating row as inline SVG icons.
+	"stars": func(rating float64) template.HTML {
+		out := template.HTML(fmt.Sprintf(
+			`<span class="stars" role="img" aria-label="%.1f out of 5 stars">`,
+			rating))
+		rounded := int(math.Floor(rating + 0.5))
+		for i := 1; i <= 5; i++ {
+			out += starSVG(i <= rounded)
+		}
+		return out + `</span>`
 	},
 }
 
@@ -1208,6 +1238,17 @@ AND chapters.status = 'published'
 
 	isOwner := userID == ownerID
 
+	// Human-friendly chapter number ("Chapter 3", not "Chapter 1042").
+	var chapterNumber int
+	err = db.QueryRow(
+		`SELECT COUNT(*) FROM chapters
+		 WHERE book_id = $1 AND status = 'published' AND id <= $2`,
+		bookID, ch.ID,
+	).Scan(&chapterNumber)
+	if err != nil {
+		chapterNumber = ch.ID
+	}
+
 	if userID != 0 && !isOwner {
 
 		_, err = db.Exec(
@@ -1246,12 +1287,14 @@ AND chapters.status = 'published'
 	hasNext := err == nil
 
 	pageData := ChapterPage{
-		Chapter:     ch,
-		PreviousID:  previousID,
-		NextID:      nextID,
-		HasPrevious: hasPrevious,
-		HasNext:     hasNext,
-		IsOwner:     isOwner,
+		Chapter:       ch,
+		BookID:        bookID,
+		ChapterNumber: chapterNumber,
+		PreviousID:    previousID,
+		NextID:        nextID,
+		HasPrevious:   hasPrevious,
+		HasNext:       hasNext,
+		IsOwner:       isOwner,
 	}
 
 	tmpl, err := parseTemplate("chapter.html")

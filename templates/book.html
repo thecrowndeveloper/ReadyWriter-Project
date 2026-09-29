@@ -74,7 +74,7 @@
                 <h1>{{.Book.Title}}</h1>
 
                 <p class="book-author">
-                    ✍️ by {{.Book.AuthorName}}
+                    by {{.Book.AuthorName}}
                 </p>
 
                 <p class="book-meta">
@@ -85,14 +85,17 @@
                 </p>
 
                 <p class="book-chapter-count">
-                    📚 {{.Book.ChapterCount}}
+                    {{.Book.ChapterCount}}
                     {{if eq .Book.ChapterCount 1}}chapter{{else}}chapters{{end}}
+                </p>
+
+                <p class="book-rating-line">
                     {{if .Book.HasRating}}
-                        · ⭐ {{printf "%.1f" .Book.AvgRating}}
-                        ({{.Book.RatingCount}}
-                        {{if eq .Book.RatingCount 1}}review{{else}}reviews{{end}})
+                        {{stars .Book.AvgRating}}
+                        <span class="rating-value">{{printf "%.1f" .Book.AvgRating}}</span>
+                        <span class="rating-count">({{.Book.RatingCount}} {{if eq .Book.RatingCount 1}}review{{else}}reviews{{end}})</span>
                     {{else}}
-                        · Not yet rated
+                        <span class="rating-none">Not yet rated</span>
                     {{end}}
                 </p>
 
@@ -111,7 +114,7 @@
                         >
 
                         <button type="submit" class="message-button">
-                            🔖 Saved — Unsave
+                            Saved — Remove
                         </button>
 
                     </form>
@@ -127,7 +130,7 @@
                         >
 
                         <button type="submit" class="message-button">
-                            🔖 Save Book
+                            Save Book
                         </button>
 
                     </form>
@@ -137,7 +140,7 @@
                     {{else}}
 
                     <a href="/login" class="message-button login-hint">
-                        🔖 Save Book (login required)
+                        Save Book — Log in to use
                     </a>
 
                     {{end}}
@@ -208,7 +211,7 @@
         <section class="reviews-section">
 
             <p class="section-label">
-                💬 REVIEWS
+                Reviews
             </p>
 
             {{if .UserID}}
@@ -222,19 +225,22 @@
                 >
 
                 {{if .HasReviewed}}
-                <p class="filter-note">Already reviewed — submitting again updates your review.</p>
+                <p class="filter-note">You have already reviewed this book — submitting again updates your review.</p>
                 {{end}}
 
-                <label>
-                    Your rating:
-                    <select name="rating" required>
-                        <option value="5">⭐⭐⭐⭐⭐ 5 — Loved it</option>
-                        <option value="4">⭐⭐⭐⭐ 4 — Great</option>
-                        <option value="3">⭐⭐⭐ 3 — Good</option>
-                        <option value="2">⭐⭐ 2 — Okay</option>
-                        <option value="1">⭐ 1 — Not for me</option>
-                    </select>
-                </label>
+                <fieldset class="star-input" id="star-input-group">
+                    <legend>Your rating</legend>
+                    <input type="radio" id="rate5" name="rating" value="5" required>
+                    <label for="rate5" data-stars="5">5 stars</label>
+                    <input type="radio" id="rate4" name="rating" value="4">
+                    <label for="rate4" data-stars="4">4 stars</label>
+                    <input type="radio" id="rate3" name="rating" value="3">
+                    <label for="rate3" data-stars="3">3 stars</label>
+                    <input type="radio" id="rate2" name="rating" value="2">
+                    <label for="rate2" data-stars="2">2 stars</label>
+                    <input type="radio" id="rate1" name="rating" value="1">
+                    <label for="rate1" data-stars="1">1 star</label>
+                </fieldset>
 
                 <textarea
                     name="content"
@@ -254,7 +260,7 @@
             <p class="empty-message">
                 <a href="/login">Log in</a> or
                 <a href="/register">create a free account</a>
-                to leave a review.
+                to leave a review. Reading stays free — no account needed.
             </p>
 
             {{end}}
@@ -265,7 +271,7 @@
 
                         <p class="review-header">
                             <strong>{{.UserName}}</strong>
-                            <span class="review-stars">{{repeat "⭐" .Rating}}{{repeat "☆" (sub 5 .Rating)}}</span>
+                            <span class="review-stars">{{stars .RatingFloat}}</span>
                             <span class="review-date">{{.CreatedAt}}</span>
                         </p>
 
@@ -280,7 +286,7 @@
                     {{else}}
 
                     <p class="empty-message">
-                        No reviews yet. Be the first!
+                        No reviews yet. Be the first.
                     </p>
 
                     {{end}}
@@ -288,6 +294,8 @@
         </section>
 
     </main>
+
+    <script src="/static/js/main.js"></script>
 
 </body>
 

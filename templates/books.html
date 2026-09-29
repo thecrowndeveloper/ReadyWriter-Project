@@ -126,9 +126,13 @@
                     {{else}}
                         published chapters
                     {{end}}
-                    {{if .HasRating}}
-                        · ⭐ {{printf "%.1f" .AvgRating}} ({{.RatingCount}})
-                    {{end}}
+                    <span class="book-rating-inline">
+                        {{if .HasRating}}
+                            {{stars .AvgRating}}
+                            <span class="rating-value">{{printf "%.1f" .AvgRating}}</span>
+                            <span class="rating-count">({{.RatingCount}})</span>
+                        {{end}}
+                    </span>
                 </p>
 
             </div>
@@ -147,6 +151,8 @@
         {{end}}
 
     </main>
+
+    <script src="/static/js/main.js"></script>
 
 </body>
 

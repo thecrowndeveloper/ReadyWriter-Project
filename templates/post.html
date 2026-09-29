@@ -86,12 +86,16 @@
             >
 
             <button type="submit" class="message-button">
-                Like Post ♡
+                {{if .LikedByMe}}Unlike ♥{{else}}Like Post ♡{{end}}
             </button>
 
         </form>
 
     {{end}}
+
+    <div class="post-like-count">
+        {{.LikeCount}} {{if eq .LikeCount 1}}like{{else}}likes{{end}}
+    </div>
 
 </section>
 

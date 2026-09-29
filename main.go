@@ -41,11 +41,11 @@ type SavedBook struct {
 }
 
 type Book struct {
-    ID           int
-    Title        string
-    Description  string
-    ChapterCount int
-    UserID       int
+	ID           int
+	Title        string
+	Description  string
+	ChapterCount int
+	UserID       int
 }
 
 type ChapterPage struct {
@@ -58,11 +58,13 @@ type ChapterPage struct {
 }
 
 type Post struct {
-	ID        int
-	Number    int
-	UserName  string
-	Content   string
-	CreatedAt string
+	ID           int
+	Number       int
+	UserName     string
+	Content      string
+	CreatedAt    string
+	LikeCount    int
+	CommentCount int
 }
 
 type Comment struct {
@@ -143,12 +145,12 @@ ORDER BY books.id DESC
 		var book Book
 
 		err := rows.Scan(
-    &book.ID,
-    &book.Title,
-    &book.Description,
-    &book.ChapterCount,
-    &book.UserID,
-)
+			&book.ID,
+			&book.Title,
+			&book.Description,
+			&book.ChapterCount,
+			&book.UserID,
+		)
 		if err != nil {
 			http.Error(w, "Unable to read book", http.StatusInternalServerError)
 			return
@@ -179,13 +181,13 @@ func book(w http.ResponseWriter, r *http.Request) {
 	var currentBook Book
 
 	err := db.QueryRow(
-    "SELECT id, title, description FROM books WHERE id = $1",
-    id,
-).Scan(
-    &currentBook.ID,
-    &currentBook.Title,
-    &currentBook.Description,
-)
+		"SELECT id, title, description FROM books WHERE id = $1",
+		id,
+	).Scan(
+		&currentBook.ID,
+		&currentBook.Title,
+		&currentBook.Description,
+	)
 	if err != nil {
 		http.Error(w, "Book not found", http.StatusNotFound)
 		return
@@ -330,10 +332,24 @@ func community(w http.ResponseWriter, r *http.Request) {
             posts.id,
             users.name,
             posts.content,
-            posts.created_at
+            posts.created_at::TEXT,
+            COALESCE(likes.total, 0),
+            COALESCE(comments.total, 0)
         FROM posts
         JOIN users
             ON posts.user_id = users.id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS total
+            FROM post_likes
+            GROUP BY post_id
+        ) likes
+            ON likes.post_id = posts.id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS total
+            FROM comments
+            GROUP BY post_id
+        ) comments
+            ON comments.post_id = posts.id
         ORDER BY posts.created_at DESC
         `,
 	)
@@ -356,6 +372,8 @@ func community(w http.ResponseWriter, r *http.Request) {
 			&post.UserName,
 			&post.Content,
 			&post.CreatedAt,
+			&post.LikeCount,
+			&post.CommentCount,
 		)
 
 		if err != nil {
@@ -551,27 +569,6 @@ func post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err = db.Query(
-		`
-    SELECT
-        comments.id,
-        users.name,
-        comments.content,
-        comments.created_at::TEXT
-    FROM comments
-    JOIN users
-        ON comments.user_id = users.id
-    WHERE comments.post_id = $1
-    ORDER BY comments.created_at ASC
-    `,
-		postID,
-	)
-
-	if err != nil {
-		http.Error(w, "Unable to load comments", http.StatusInternalServerError)
-		return
-	}
-
 	defer rows.Close()
 
 	var comments []Comment
@@ -595,6 +592,34 @@ func post(w http.ResponseWriter, r *http.Request) {
 		comments = append(comments, comment)
 	}
 
+	var likeCount int
+
+	err = db.QueryRow(
+		"SELECT COUNT(*) FROM post_likes WHERE post_id = $1",
+		postID,
+	).Scan(&likeCount)
+
+	if err != nil {
+		http.Error(w, "Unable to load likes", http.StatusInternalServerError)
+		return
+	}
+
+	likedByMe := false
+
+	if userID != 0 {
+
+		err = db.QueryRow(
+			"SELECT EXISTS (SELECT 1 FROM post_likes WHERE user_id = $1 AND post_id = $2)",
+			userID,
+			postID,
+		).Scan(&likedByMe)
+
+		if err != nil {
+			http.Error(w, "Unable to check like", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	data := struct {
 		ID           int
 		UserName     string
@@ -602,6 +627,8 @@ func post(w http.ResponseWriter, r *http.Request) {
 		PostUserName string
 		CreatedAt    string
 		Comments     []Comment
+		LikeCount    int
+		LikedByMe    bool
 	}{
 		ID:           post.ID,
 		UserName:     userName,
@@ -609,6 +636,8 @@ func post(w http.ResponseWriter, r *http.Request) {
 		PostUserName: post.UserName,
 		CreatedAt:    post.CreatedAt,
 		Comments:     comments,
+		LikeCount:    likeCount,
+		LikedByMe:    likedByMe,
 	}
 
 	tmpl, err := template.ParseFiles(
@@ -696,20 +725,48 @@ func likePost(w http.ResponseWriter, r *http.Request) {
 
 	postID := r.FormValue("post_id")
 
-	_, err := db.Exec(
-		`
-		INSERT INTO post_likes (
-			user_id,
-			post_id
-		)
-		VALUES ($1, $2)
-		`,
+	likedByMe := false
+
+	err := db.QueryRow(
+		"SELECT EXISTS (SELECT 1 FROM post_likes WHERE user_id = $1 AND post_id = $2)",
 		userID,
 		postID,
-	)
+	).Scan(&likedByMe)
 
 	if err != nil {
-		http.Error(w, "Unable to like post", http.StatusInternalServerError)
+		http.Error(w, "Unable to check like", http.StatusInternalServerError)
+		return
+	}
+
+	if likedByMe {
+
+		_, err = db.Exec(
+			`
+			DELETE FROM post_likes
+			WHERE user_id = $1
+			AND post_id = $2
+			`,
+			userID,
+			postID,
+		)
+
+	} else {
+
+		_, err = db.Exec(
+			`
+			INSERT INTO post_likes (
+				user_id,
+				post_id
+			)
+			VALUES ($1, $2)
+			`,
+			userID,
+			postID,
+		)
+	}
+
+	if err != nil {
+		http.Error(w, "Unable to update like", http.StatusInternalServerError)
 		return
 	}
 
@@ -1404,11 +1461,11 @@ func createBook(w http.ResponseWriter, r *http.Request) {
 	description := strings.TrimSpace(r.FormValue("description"))
 
 	_, err = db.Exec(
-    "INSERT INTO books (title, description, user_id) VALUES ($1, $2, $3)",
-    title,
-    description,
-    userID,
-)
+		"INSERT INTO books (title, description, user_id) VALUES ($1, $2, $3)",
+		title,
+		description,
+		userID,
+	)
 	if err != nil {
 		http.Error(w, "Unable to create book", http.StatusInternalServerError)
 		return

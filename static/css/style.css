@@ -2216,3 +2216,21 @@ footer {
 a:hover .arrow {
     transform: rotate(45deg) translate(3px, -3px);
 }
+
+/* =========================================
+   POST STATS (likes & comments)
+   ========================================= */
+
+.post-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.post-like-count {
+    align-self: center;
+    font-size: 0.9rem;
+    opacity: 0.75;
+}
